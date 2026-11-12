@@ -190,25 +190,20 @@ class SleepService : Service(), SensorEventListener {
         Thread({
             val rec = createRecorder()
             if (rec == null) {
-                // In combinata conserva l'accelerometro; in comodino ripiega sul materasso.
-                handler.post {
-                    if (instance === this) {
-                        micMode = false
-                        if (!accelMode) {
-                            trackingMode = SleepTrackingMode.MATTRESS
-                            accelMode = true
-                            startAccelerometer()
-                        }
-                    }
-                }
+                handler.post { microphoneUnavailable() }
                 return@Thread
             }
             val buf = ShortArray(CHUNK)
             var low = 0f
+            var failed = false
             try {
                 rec.startRecording()
                 while (recording) {
                     val n = rec.read(buf, 0, buf.size)
+                    if (n < 0) {
+                        failed = true
+                        break
+                    }
                     if (n <= 0) continue
                     var sum = 0.0
                     var lowSum = 0.0
@@ -223,11 +218,25 @@ class SleepService : Service(), SensorEventListener {
                     synchronized(micLevels) { micLevels.add(db); micLowRatios.add(ratio) }
                 }
             } catch (_: Exception) {
+                failed = true
             } finally {
                 runCatching { rec.stop() }
                 rec.release()
             }
+            if (failed) handler.post { microphoneUnavailable() }
         }, "svegliami-mic").start()
+    }
+
+    /** Degrades to the independent motion sensor and updates the foreground status. */
+    private fun microphoneUnavailable() {
+        if (instance !== this) return
+        micMode = false
+        trackingMode = SleepTrackingMode.MATTRESS
+        if (!accelMode) {
+            accelMode = true
+            startAccelerometer()
+        }
+        goForeground()
     }
 
     /** Punteggio del minuto dal microfono, rispetto al rumore di fondo degli ultimi minuti. */
