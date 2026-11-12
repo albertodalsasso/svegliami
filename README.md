@@ -10,9 +10,10 @@ Esempio: sveglia alle 07:00 con anticipo di 30 minuti.
 La sveglia normale è **sempre** programmata. Se meteo o rete non funzionano, suoni comunque all'orario normale.
 
 ## Sveglia intelligente e monitoraggio del sonno
-Senza smartwatch, in due modi a scelta:
+Senza smartwatch, in tre modalità a scelta:
 - **Sul materasso** (accelerometro): il telefono sente le vibrazioni quando ti muovi.
 - **Sul comodino** (microfono): l'app misura solo il **volume** ogni 100 ms (fruscio di lenzuola e coperte) rispetto al rumore di fondo della stanza. **L'audio non viene mai registrato né salvato**, resta solo un punteggio al minuto. Rumori costanti come un ventilatore non contano, ma un partner o un animale nella stanza possono disturbare la misura.
+- **Combinata**: usa accelerometro e microfono insieme e pesa i segnali in base alla copertura dei campioni; se il microfono non è disponibile, continua con l'accelerometro.
 1. In una sveglia scegli **🌙 Sveglia intelligente**: fino a 10/20/30/45 minuti prima.
 2. La sera scegli dove metti il telefono, premi **🌙 Buonanotte** e lascialo sul materasso vicino al cuscino oppure sul comodino (meglio in carica).
 3. Nella finestra, al primo movimento (sonno leggero) la sveglia suona. Se non ti muovi, suona comunque all'orario previsto.
@@ -22,6 +23,10 @@ Senza smartwatch, in due modi a scelta:
 **Russare** (solo con il telefono sul comodino): un minuto conta come russato se ci sono almeno 4 suoni **gravi** (energia sotto ~800 Hz), lunghi 0,3–2,5 s, ripetuti a intervalli regolari da 2–8 s come il respiro. Il fruscio delle coperte è acuto e irregolare, quindi non conta. I minuti di russare compaiono come tacche rosse nel grafico e non vengono contati come movimento. Anche qui l'audio viene solo analizzato al volo, mai salvato.
 
 Le fasi sono stimate dai movimenti (attigrafia): sono un'indicazione, non una misura clinica.
+
+La modalità **combinata** usa accelerometro e microfono insieme e pesa i segnali in base alla copertura dei campioni disponibili. Se il microfono non è disponibile, il monitoraggio continua con l'accelerometro.
+
+Lo storico mostra anche uno **Sleep Score sperimentale** da 0 a 100. Il punteggio spiega le componenti misurate e non penalizza i sensori non disponibili; la regolarità usa per ora l'orario di avvio del monitoraggio come proxy. Non è una valutazione medica. Il diario consente di annotare umore, caffeina, attività, stress, pasto e note per ogni sessione.
 
 ## Come aprirlo
 1. Apri questa cartella con **Android Studio** (Ladybug o più recente) e lascia completare la sincronizzazione Gradle.

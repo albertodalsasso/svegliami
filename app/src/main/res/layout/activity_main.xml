@@ -192,6 +192,13 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="🎙  Comodino" />
+                    <Button
+                        android:id="@+id/btnModeCombined"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Combinata" />
                 </com.google.android.material.button.MaterialButtonToggleGroup>
 
                 <Button
@@ -210,6 +217,15 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
                     android:text="Storico del sonno  →"
+                    android:textColor="@color/on_tertiary_container" />
+
+                <Button
+                    android:id="@+id/btnJournal"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:text="Diario del risveglio  →"
                     android:textColor="@color/on_tertiary_container" />
             </LinearLayout>
 

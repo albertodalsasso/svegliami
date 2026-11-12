@@ -99,10 +99,21 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnSleepHistory).setOnClickListener {
             startActivity(Intent(this, SleepActivity::class.java))
         }
-        toggleSleepMode.check(if (p.sleepUseMic) R.id.btnModeNightstand else R.id.btnModeBed)
+        findViewById<Button>(R.id.btnJournal).setOnClickListener {
+            startActivity(Intent(this, JournalActivity::class.java))
+        }
+        toggleSleepMode.check(when (p.sleepTrackingMode) {
+            SleepTrackingMode.NIGHTSTAND -> R.id.btnModeNightstand
+            SleepTrackingMode.MATTRESS -> R.id.btnModeBed
+            SleepTrackingMode.COMBINED -> R.id.btnModeCombined
+        })
         toggleSleepMode.addOnButtonCheckedListener { _, id, checked ->
             if (checked) {
-                p.sleepUseMic = id == R.id.btnModeNightstand
+                p.sleepTrackingMode = when (id) {
+                    R.id.btnModeNightstand -> SleepTrackingMode.NIGHTSTAND
+                    R.id.btnModeCombined -> SleepTrackingMode.COMBINED
+                    else -> SleepTrackingMode.MATTRESS
+                }
                 renderSleep()
             }
         }
@@ -294,7 +305,11 @@ class MainActivity : AppCompatActivity() {
                 "Si ferma da solo quando suona la sveglia."
             btnSleep.text = "Ferma il monitoraggio"
         } else {
-            val where = if (p.sleepUseMic) "sul comodino, con il microfono verso il letto" else "sul materasso, vicino al cuscino"
+            val where = when (p.sleepTrackingMode) {
+                SleepTrackingMode.NIGHTSTAND -> "sul comodino, con il microfono verso il letto"
+                SleepTrackingMode.COMBINED -> "sul materasso vicino al cuscino, con il microfono attivo"
+                SleepTrackingMode.MATTRESS -> "sul materasso, vicino al cuscino"
+            }
             tvSleep.text = if (p.alarms.none { it.enabled && it.smartWindowMin > 0 }) {
                 "Registra la tua notte. Attiva la sveglia intelligente in una sveglia per svegliarti nel sonno leggero."
             } else {
@@ -310,7 +325,7 @@ class MainActivity : AppCompatActivity() {
                 SleepService.stop()
                 btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
             }
-            p.sleepUseMic && !SleepService.hasMicPermission(this) ->
+            p.sleepTrackingMode.usesMicrophone && !SleepService.hasMicPermission(this) ->
                 requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC)
             else -> startSleep()
         }
@@ -318,7 +333,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun startSleep() {
         SleepService.start(this)
-        val where = if (p.sleepUseMic) "sul comodino, vicino al letto" else "sul materasso, vicino al cuscino"
+        val where = when (p.sleepTrackingMode) {
+            SleepTrackingMode.NIGHTSTAND -> "sul comodino, vicino al letto"
+            SleepTrackingMode.COMBINED -> "sul materasso vicino al cuscino; il microfono analizzerà i rumori"
+            SleepTrackingMode.MATTRESS -> "sul materasso, vicino al cuscino"
+        }
         Toast.makeText(this, "Metti il telefono $where. Buonanotte!", Toast.LENGTH_LONG).show()
         btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
     }
