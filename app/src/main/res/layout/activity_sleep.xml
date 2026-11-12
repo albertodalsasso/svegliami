@@ -112,6 +112,7 @@
                 android:layout_marginTop="12dp" />
 
             <TextView
+                android:id="@+id/tvNightsTitle"
                 style="@style/Svegliami.Title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -129,7 +130,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="Le fasi sono stimate dai movimenti e dai suoni registrati dal telefono: sono un'indicazione, non una misura clinica."
+                android:text="Le fasi sono stimate dai movimenti e dai suoni rilevati dal telefono: sono un'indicazione, non una misura clinica."
                 android:textSize="12sp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

@@ -52,8 +52,9 @@ class SleepActivity : AppCompatActivity() {
         val visible = if (sessions.isEmpty()) View.GONE else View.VISIBLE
         findViewById<View>(R.id.statsBlock).visibility = visible
         findViewById<View>(R.id.graphCard).visibility = visible
+        findViewById<View>(R.id.tvNightsTitle).visibility = visible
         if (sessions.isEmpty()) {
-            tvNight.text = "Nessuna notte registrata"
+            tvNight.text = "🌙  Nessuna notte registrata"
             tvNightRange.text = ""
             tvDetails.text = "La sera premi «Buonanotte» nella schermata principale e lascia il telefono sul materasso o sul comodino, come scelto lì."
             nightList.removeAllViews()

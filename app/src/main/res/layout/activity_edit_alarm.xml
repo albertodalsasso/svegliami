@@ -81,7 +81,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="Ripeti" />
-                    <com.google.android.material.chip.ChipGroup
+                    <it.svegliami.SegmentRow
                         android:id="@+id/chipDays"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
@@ -90,7 +90,8 @@
                         android:id="@+id/tvDaysHint"
                         style="@style/Svegliami.Body"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -110,13 +111,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="☔  Se piove, anticipa di" />
-                    <com.google.android.material.chip.ChipGroup
+                android:text="☔  Se piove, anticipa di (minuti)" />
+                    <it.svegliami.SegmentRow
                         android:id="@+id/chipAdvance"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        app:selectionRequired="true"
-                        app:singleSelection="true" />
+                        android:layout_height="wrap_content" />
 
                     <TextView
                         android:id="@+id/tvProb"
@@ -152,19 +151,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="🌙  Sveglia intelligente" />
-                    <com.google.android.material.chip.ChipGroup
+                android:text="🌙  Sveglia intelligente (minuti prima)" />
+                    <it.svegliami.SegmentRow
                         android:id="@+id/chipSmart"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        app:selectionRequired="true"
-                        app:singleSelection="true" />
+                        android:layout_height="wrap_content" />
 
                     <TextView
                         style="@style/Svegliami.Body"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="12dp"
                         android:text="Ti sveglia nel sonno leggero entro la finestra scelta. Funziona se la sera avvii «Buonanotte» nella sezione Sonno, con il telefono sul materasso o sul comodino." />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

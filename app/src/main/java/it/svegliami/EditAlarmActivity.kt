@@ -15,8 +15,6 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
 import com.google.android.material.slider.Slider
 import java.util.concurrent.Executors
 
@@ -41,10 +39,10 @@ class EditAlarmActivity : AppCompatActivity() {
 
     private lateinit var etLabel: EditText
     private lateinit var btnTime: TextView
-    private lateinit var chipDays: ChipGroup
+    private lateinit var chipDays: SegmentRow
     private lateinit var tvDaysHint: TextView
-    private lateinit var chipAdvance: ChipGroup
-    private lateinit var chipSmart: ChipGroup
+    private lateinit var chipAdvance: SegmentRow
+    private lateinit var chipSmart: SegmentRow
     private lateinit var sliderProb: Slider
     private lateinit var tvProb: TextView
     private lateinit var btnRingtone: Button
@@ -95,15 +93,14 @@ class EditAlarmActivity : AppCompatActivity() {
         hour = alarm.hour; minute = alarm.minute; ringtoneUri = alarm.ringtoneUri
         etLabel.setText(alarm.label)
         updateTimeLabel()
-        Alarm.DAY_NAMES.forEachIndexed { i, name ->
-            addChip(chipDays, name, i + 1, checked = (i + 1) in alarm.days)
-        }
-        chipDays.setOnCheckedStateChangeListener { _, _ -> updateDaysHint() }
+        chipDays.multi = true
+        chipDays.setOptions(Alarm.DAY_NAMES.mapIndexed { i, name -> name to i + 1 }, alarm.days)
+        chipDays.onChange = { updateDaysHint() }
         updateDaysHint()
         val adv = if (alarm.advanceMin in ADVANCE_OPTIONS) alarm.advanceMin else 30
-        ADVANCE_OPTIONS.forEach { addChip(chipAdvance, "$it min", it, checked = it == adv) }
+        chipAdvance.setOptions(ADVANCE_OPTIONS.map { "$it" to it }, setOf(adv))
         val smart = if (alarm.smartWindowMin in SMART_OPTIONS) alarm.smartWindowMin else 0
-        SMART_OPTIONS.forEach { addChip(chipSmart, if (it == 0) "No" else "$it min", it, checked = it == smart) }
+        chipSmart.setOptions(SMART_OPTIONS.map { (if (it == 0) "No" else "$it") to it }, setOf(smart))
         sliderProb.value = (alarm.probThreshold / 10 * 10).coerceIn(10, 100).toFloat()
         sliderProb.addOnChangeListener { _, _, _ -> updateProbLabel() }
         updateProbLabel()
@@ -123,25 +120,12 @@ class EditAlarmActivity : AppCompatActivity() {
         }
     }
 
-    /** Aggiunge un chip selezionabile; il valore associato sta nel tag. */
-    private fun addChip(group: ChipGroup, label: String, value: Int, checked: Boolean) {
-        val chip = layoutInflater.inflate(R.layout.item_chip_filter, group, false) as Chip
-        chip.id = View.generateViewId()
-        chip.text = label
-        chip.tag = value
-        group.addView(chip)
-        chip.isChecked = checked
-    }
-
-    private fun checkedValue(group: ChipGroup, default: Int): Int =
-        (group.findViewById<Chip>(group.checkedChipId)?.tag as? Int) ?: default
-
     private fun probValue() = sliderProb.value.toInt()
     private fun updateTimeLabel() { btnTime.text = "%02d:%02d".format(hour, minute) }
     private fun updateProbLabel() { tvProb.text = "Anticipa anche se la probabilità di pioggia è ≥ ${probValue()}%" }
     private fun updateRingtoneLabel() { btnRingtone.text = "🔔 ${Ringtones.title(this, ringtoneUri)}" }
     private fun updateDaysHint() {
-        tvDaysHint.text = if (chipDays.checkedChipIds.isEmpty()) "Nessun giorno selezionato: suonerà una volta sola" else ""
+        tvDaysHint.text = if (chipDays.selected().isEmpty()) "Nessun giorno selezionato: suonerà una volta sola" else ""
         tvDaysHint.visibility = if (tvDaysHint.text.isEmpty()) View.GONE else View.VISIBLE
     }
 
@@ -149,12 +133,12 @@ class EditAlarmActivity : AppCompatActivity() {
     private fun formAlarm() = alarm.copy(
         hour = hour,
         minute = minute,
-        days = chipDays.checkedChipIds.mapNotNull { chipDays.findViewById<Chip>(it)?.tag as? Int }.toSet(),
-        advanceMin = checkedValue(chipAdvance, 30),
+        days = chipDays.selected(),
+        advanceMin = chipAdvance.selectedOne(30),
         probThreshold = probValue(),
         ringtoneUri = ringtoneUri,
         label = etLabel.text.toString().trim(),
-        smartWindowMin = checkedValue(chipSmart, 0),
+        smartWindowMin = chipSmart.selectedOne(0),
     )
 
     private fun save() {
