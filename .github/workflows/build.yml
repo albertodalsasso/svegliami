@@ -4,6 +4,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,3 +30,17 @@ jobs:
         with:
           name: svegliami-apk
           path: app/build/outputs/apk/debug/*.apk
+
+      # Su main: pubblica l'APK come release "apk", con link diretto e fisso:
+      # https://github.com/<utente>/<repo>/releases/download/apk/svegliami.apk
+      - name: Pubblica l'APK come release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk svegliami.apk
+          gh release delete apk --cleanup-tag --yes || true
+          gh release create apk svegliami.apk \
+            --title "Svegliami (ultima build)" \
+            --notes "Build automatica del commit ${GITHUB_SHA::7}" \
+            --target "$GITHUB_SHA"

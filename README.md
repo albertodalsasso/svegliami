@@ -32,3 +32,8 @@ Il bottone «Controlla il meteo adesso» mostra cosa deciderebbe l'app per la pr
 | `AlarmService.kt` / `AlarmActivity.kt` | Suoneria, vibrazione e schermata a tutto schermo |
 | `LocationHelper.kt` | Posizione GPS/rete, nome della località (Geocoder), aggiornamento in background |
 | `Receivers.kt` | Receiver per la sveglia, per il controllo meteo e per il riavvio |
+
+## Scaricare l'APK sul telefono
+A ogni push su `main`, GitHub Actions compila l'app e pubblica l'APK con un link fisso:
+https://github.com/albertodalsasso/svegliami/releases/download/apk/svegliami.apk
+(il repository è privato: apri il link dal browser del telefono dopo aver fatto l'accesso a GitHub).
