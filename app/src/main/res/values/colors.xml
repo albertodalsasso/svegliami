@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Palette "notte e alba" -->
+    <color name="night_bg">#0E1330</color>
+    <color name="surface">#181E45</color>
+    <color name="surface_high">#222A5C</color>
+    <color name="outline">#363F75</color>
+    <color name="on_surface">#ECEEFF</color>
+    <color name="on_surface_variant">#A9AFD6</color>
+
+    <color name="primary">#FFB86B</color>
+    <color name="on_primary">#3A2000</color>
+    <color name="primary_container">#4F3414</color>
+    <color name="on_primary_container">#FFDDB8</color>
+
+    <color name="secondary">#8AB4FF</color>
+    <color name="on_secondary">#00224D</color>
+    <color name="secondary_container">#1F3A66</color>
+    <color name="on_secondary_container">#D6E3FF</color>
+
+    <color name="tertiary">#B9A5FF</color>
+    <color name="on_tertiary">#20125A</color>
+    <color name="tertiary_container">#33296B</color>
+    <color name="on_tertiary_container">#E8DEFF</color>
+
+    <color name="error">#FF8A80</color>
+    <color name="error_container">#4A1F2B</color>
+    <color name="on_error_container">#FFDAD6</color>
+
+    <!-- Grafico del sonno -->
+    <color name="stage_deep">#7B6CFF</color>
+    <color name="stage_light">#5EC8FF</color>
+    <color name="stage_awake">#FFB86B</color>
+    <color name="snore">#FF6B81</color>
+    <color name="smart_wake">#FF4F9A</color>
+</resources>

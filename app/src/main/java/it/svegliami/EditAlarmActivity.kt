@@ -8,16 +8,16 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.CheckBox
 import android.widget.EditText
-import android.widget.SeekBar
-import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
+import com.google.android.material.slider.Slider
 import java.util.concurrent.Executors
 
 /** Creazione e modifica di una singola sveglia. */
@@ -40,12 +40,12 @@ class EditAlarmActivity : AppCompatActivity() {
     private var preview: Ringtone? = null
 
     private lateinit var etLabel: EditText
-    private lateinit var btnTime: Button
-    private lateinit var dayBoxes: List<CheckBox>
+    private lateinit var btnTime: TextView
+    private lateinit var chipDays: ChipGroup
     private lateinit var tvDaysHint: TextView
-    private lateinit var spAdvance: Spinner
-    private lateinit var spSmart: Spinner
-    private lateinit var sbProb: SeekBar
+    private lateinit var chipAdvance: ChipGroup
+    private lateinit var chipSmart: ChipGroup
+    private lateinit var sliderProb: Slider
     private lateinit var tvProb: TextView
     private lateinit var btnRingtone: Button
     private lateinit var btnPreview: Button
@@ -68,21 +68,23 @@ class EditAlarmActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_alarm)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         p = Prefs(this)
 
         val existing = p.alarm(intent.getIntExtra(EXTRA_ID, -1))
         isNew = existing == null
         alarm = existing?.copy() ?: Alarm(id = p.newAlarmId())
-        title = if (isNew) "Nuova sveglia" else "Modifica sveglia"
+        findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            title = if (isNew) "Nuova sveglia" else "Modifica sveglia"
+            setNavigationOnClickListener { finish() }
+        }
 
         etLabel = findViewById(R.id.etLabel)
         btnTime = findViewById(R.id.btnTime)
-        dayBoxes = listOf(R.id.d1, R.id.d2, R.id.d3, R.id.d4, R.id.d5, R.id.d6, R.id.d7).map { findViewById(it) }
+        chipDays = findViewById(R.id.chipDays)
         tvDaysHint = findViewById(R.id.tvDaysHint)
-        spAdvance = findViewById(R.id.spAdvance)
-        spSmart = findViewById(R.id.spSmart)
-        sbProb = findViewById(R.id.sbProb)
+        chipAdvance = findViewById(R.id.chipAdvance)
+        chipSmart = findViewById(R.id.chipSmart)
+        sliderProb = findViewById(R.id.sliderProb)
         tvProb = findViewById(R.id.tvProb)
         btnRingtone = findViewById(R.id.btnRingtone)
         btnPreview = findViewById(R.id.btnPreview)
@@ -92,20 +94,17 @@ class EditAlarmActivity : AppCompatActivity() {
         hour = alarm.hour; minute = alarm.minute; ringtoneUri = alarm.ringtoneUri
         etLabel.setText(alarm.label)
         updateTimeLabel()
-        dayBoxes.forEachIndexed { i, cb ->
-            cb.isChecked = (i + 1) in alarm.days
-            cb.setOnCheckedChangeListener { _, _ -> updateDaysHint() }
+        Alarm.DAY_NAMES.forEachIndexed { i, name ->
+            addChip(chipDays, name, i + 1, checked = (i + 1) in alarm.days)
         }
+        chipDays.setOnCheckedStateChangeListener { _, _ -> updateDaysHint() }
         updateDaysHint()
-        spAdvance.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, ADVANCE_OPTIONS.map { "$it minuti" })
-        spAdvance.setSelection(ADVANCE_OPTIONS.indexOf(alarm.advanceMin).let { if (it < 0) ADVANCE_OPTIONS.indexOf(30) else it })
-        spSmart.adapter = ArrayAdapter(
-            this, android.R.layout.simple_spinner_dropdown_item,
-            SMART_OPTIONS.map { if (it == 0) "Disattivata" else "Fino a $it minuti prima" },
-        )
-        spSmart.setSelection(SMART_OPTIONS.indexOf(alarm.smartWindowMin).coerceAtLeast(0))
-        sbProb.max = 9
-        sbProb.progress = (alarm.probThreshold / 10 - 1).coerceIn(0, 9)
+        val adv = if (alarm.advanceMin in ADVANCE_OPTIONS) alarm.advanceMin else 30
+        ADVANCE_OPTIONS.forEach { addChip(chipAdvance, "$it min", it, checked = it == adv) }
+        val smart = if (alarm.smartWindowMin in SMART_OPTIONS) alarm.smartWindowMin else 0
+        SMART_OPTIONS.forEach { addChip(chipSmart, if (it == 0) "No" else "$it min", it, checked = it == smart) }
+        sliderProb.value = (alarm.probThreshold / 10 * 10).coerceIn(10, 100).toFloat()
+        sliderProb.addOnChangeListener { _, _, _ -> updateProbLabel() }
         updateProbLabel()
         updateRingtoneLabel()
         tvStatus.text = if (isNew) "" else p.state(alarm.id).lastStatus.let { if (it.isEmpty()) "" else "Ultimo controllo: $it" }
@@ -113,11 +112,6 @@ class EditAlarmActivity : AppCompatActivity() {
         btnTime.setOnClickListener {
             TimePickerDialog(this, { _, h, m -> hour = h; minute = m; updateTimeLabel() }, hour, minute, true).show()
         }
-        sbProb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(s: SeekBar, v: Int, fromUser: Boolean) = updateProbLabel()
-            override fun onStartTrackingTouch(s: SeekBar) {}
-            override fun onStopTrackingTouch(s: SeekBar) {}
-        })
         btnRingtone.setOnClickListener { openRingtonePicker() }
         btnPreview.setOnClickListener { togglePreview() }
         findViewById<Button>(R.id.btnSave).setOnClickListener { save() }
@@ -128,24 +122,38 @@ class EditAlarmActivity : AppCompatActivity() {
         }
     }
 
-    private fun probValue() = (sbProb.progress + 1) * 10
+    /** Aggiunge un chip selezionabile; il valore associato sta nel tag. */
+    private fun addChip(group: ChipGroup, label: String, value: Int, checked: Boolean) {
+        val chip = layoutInflater.inflate(R.layout.item_chip_filter, group, false) as Chip
+        chip.id = View.generateViewId()
+        chip.text = label
+        chip.tag = value
+        group.addView(chip)
+        chip.isChecked = checked
+    }
+
+    private fun checkedValue(group: ChipGroup, default: Int): Int =
+        (group.findViewById<Chip>(group.checkedChipId)?.tag as? Int) ?: default
+
+    private fun probValue() = sliderProb.value.toInt()
     private fun updateTimeLabel() { btnTime.text = "%02d:%02d".format(hour, minute) }
     private fun updateProbLabel() { tvProb.text = "Anticipa anche se la probabilità di pioggia è ≥ ${probValue()}%" }
     private fun updateRingtoneLabel() { btnRingtone.text = "🔔 ${Ringtones.title(this, ringtoneUri)}" }
     private fun updateDaysHint() {
-        tvDaysHint.text = if (dayBoxes.none { it.isChecked }) "Nessun giorno selezionato: suonerà una volta sola" else ""
+        tvDaysHint.text = if (chipDays.checkedChipIds.isEmpty()) "Nessun giorno selezionato: suonerà una volta sola" else ""
+        tvDaysHint.visibility = if (tvDaysHint.text.isEmpty()) View.GONE else View.VISIBLE
     }
 
     /** Sveglia con i valori attuali del form. */
     private fun formAlarm() = alarm.copy(
         hour = hour,
         minute = minute,
-        days = dayBoxes.mapIndexedNotNull { i, cb -> if (cb.isChecked) i + 1 else null }.toSet(),
-        advanceMin = ADVANCE_OPTIONS[spAdvance.selectedItemPosition],
+        days = chipDays.checkedChipIds.mapNotNull { chipDays.findViewById<Chip>(it)?.tag as? Int }.toSet(),
+        advanceMin = checkedValue(chipAdvance, 30),
         probThreshold = probValue(),
         ringtoneUri = ringtoneUri,
         label = etLabel.text.toString().trim(),
-        smartWindowMin = SMART_OPTIONS[spSmart.selectedItemPosition],
+        smartWindowMin = checkedValue(chipSmart, 0),
     )
 
     private fun save() {
@@ -234,11 +242,6 @@ class EditAlarmActivity : AppCompatActivity() {
     override fun onPause() {
         stopPreview()
         super.onPause()
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
     }
 
     override fun onDestroy() {

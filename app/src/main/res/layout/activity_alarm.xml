@@ -1,38 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/alarmRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
+    android:background="@drawable/bg_alarm_dawn"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="32dp">
 
     <TextView
-        android:id="@+id/alarmTime"
+        android:id="@+id/alarmIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="72sp" />
+        android:textSize="40sp" />
+
+    <FrameLayout
+        android:layout_width="260dp"
+        android:layout_height="260dp"
+        android:layout_marginTop="12dp">
+
+        <View
+            android:id="@+id/pulseRing"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_ring" />
+
+        <TextView
+            android:id="@+id/alarmTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="sans-serif-light"
+            android:textColor="#FFFFFF"
+            android:textSize="76sp" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/alarmMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="20dp"
         android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:textColor="#F2FFFFFF"
         android:textSize="18sp" />
 
     <Button
         android:id="@+id/btnSnooze"
         style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="48dp" />
+        android:layout_height="60dp"
+        android:layout_marginTop="48dp"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        app:strokeColor="#AAFFFFFF"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
 
     <Button
         android:id="@+id/btnDismiss"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="76dp"
         android:layout_marginTop="12dp"
+        android:backgroundTint="#FFFFFF"
         android:text="Ferma"
-        android:textSize="20sp" />
+        android:textColor="@color/night_bg"
+        android:textSize="22sp" />
 </LinearLayout>

@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- campanelle -->
+    <path android:fillColor="#FFB86B" android:pathData="M39,30m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
+    <path android:fillColor="#FFB86B" android:pathData="M69,30m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
+    <!-- quadrante -->
+    <path android:fillColor="#FFB86B" android:pathData="M54,54m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0" />
+    <path android:fillColor="#1A1F4E" android:pathData="M54,54m-17,0a17,17 0,1 1,34 0a17,17 0,1 1,-34 0" />
+    <!-- lancette -->
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round"
+        android:strokeLineJoin="round" android:pathData="M54,43L54,54L62,59" />
+    <!-- goccia di pioggia -->
+    <path android:fillColor="#8AB4FF" android:pathData="M74,62C74,62 67,70.5 67,75a7,7 0,0 0,14 0C81,70.5 74,62 74,62z" />
+</vector>

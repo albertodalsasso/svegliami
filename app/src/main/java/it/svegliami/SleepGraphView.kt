@@ -2,41 +2,62 @@ package it.svegliami
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.Paint
+import android.graphics.RectF
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.View
+import androidx.core.content.ContextCompat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
-/** Ipnogramma: una barra per minuto, alta e colorata in base alla fase stimata. */
+/**
+ * Ipnogramma a tre corsie (sveglio, leggero, profondo): ogni tratto continuo di una fase
+ * è una barra arrotondata nella sua corsia, collegata alla successiva da una linea sottile.
+ */
 class SleepGraphView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
 ) : View(context, attrs) {
 
     companion object {
-        val COLOR_DEEP = Color.parseColor("#5C6BC0")
-        val COLOR_LIGHT = Color.parseColor("#4FC3F7")
-        val COLOR_AWAKE = Color.parseColor("#FFB74D")
-        val COLOR_SNORE = Color.parseColor("#EF5350")
+        fun stageColor(ctx: Context, st: SleepStage) = ContextCompat.getColor(
+            ctx,
+            when (st) {
+                SleepStage.AWAKE -> R.color.stage_awake
+                SleepStage.LIGHT -> R.color.stage_light
+                SleepStage.DEEP -> R.color.stage_deep
+            },
+        )
     }
 
     var session: SleepSession? = null
         set(v) { field = v; invalidate() }
 
-    private val density = resources.displayMetrics.density
-    private val barPaint = Paint()
-    private val axisPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.GRAY
-        textSize = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, 12f, resources.displayMetrics)
-        strokeWidth = density
+    private val dp = resources.displayMetrics.density
+    private fun sp(v: Float) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, v, resources.displayMetrics)
+
+    private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val linkPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeWidth = 1.5f * dp; alpha = 110 }
+    private val gridPaint = Paint().apply {
+        color = ContextCompat.getColor(context, R.color.outline)
+        strokeWidth = dp
+        pathEffect = DashPathEffect(floatArrayOf(4 * dp, 4 * dp), 0f)
     }
-    private val markPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#E91E63")
-        strokeWidth = 2 * density
+    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = ContextCompat.getColor(context, R.color.on_surface_variant)
+        textSize = sp(11f)
     }
+    private val snorePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ContextCompat.getColor(context, R.color.snore) }
+    private val smartPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = ContextCompat.getColor(context, R.color.smart_wake)
+        strokeWidth = 2 * dp
+    }
+    private val rect = RectF()
+
+    private val lanes = listOf(SleepStage.AWAKE to "Sveglio", SleepStage.LIGHT to "Leggero", SleepStage.DEEP to "Profondo")
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -44,50 +65,74 @@ class SleepGraphView @JvmOverloads constructor(
         val stages = SleepAnalyzer.stages(s.scores)
         if (stages.isEmpty()) return
 
-        val labelH = 20 * density
-        val snoreH = if (s.snore.any { it }) 10 * density else 0f
-        val chartTop = snoreH
-        val chartH = height - labelH
-        val barW = width.toFloat() / stages.size
+        val labelW = lanes.maxOf { textPaint.measureText(it.second) } + 10 * dp
+        val left = labelW
+        val right = width.toFloat()
+        val snoreH = if (s.snore.any { it }) 10 * dp else 0f
+        val top = snoreH
+        val bottom = height - 22 * dp
+        val laneH = (bottom - top) / 3
+        val barH = laneH * 0.5f
+        val minW = (right - left) / stages.size
+        fun laneY(st: SleepStage) = top + laneH * lanes.indexOfFirst { it.first == st } + laneH / 2
 
-        stages.forEachIndexed { i, st ->
-            val (h, c) = when (st) {
-                SleepStage.AWAKE -> 1f to COLOR_AWAKE
-                SleepStage.LIGHT -> 0.62f to COLOR_LIGHT
-                SleepStage.DEEP -> 0.3f to COLOR_DEEP
-            }
-            barPaint.color = c
-            val x = i * barW
-            canvas.drawRect(x, chartTop + (chartH - chartTop) * (1 - h), x + barW + 0.5f, chartH, barPaint)
+        // Corsie
+        lanes.forEach { (st, label) ->
+            val y = laneY(st)
+            canvas.drawLine(left, y, right, y, gridPaint)
+            canvas.drawText(label, 0f, y + textPaint.textSize / 3, textPaint)
         }
 
-        // Minuti di russare: tacche rosse in cima
+        // Tratti continui di ogni fase
+        var i = 0
+        var prevEnd: Pair<Float, SleepStage>? = null
+        while (i < stages.size) {
+            val st = stages[i]
+            var j = i
+            while (j + 1 < stages.size && stages[j + 1] == st) j++
+            val x0 = left + i * minW
+            val x1 = left + (j + 1) * minW
+            val y = laneY(st)
+            val color = stageColor(context, st)
+            prevEnd?.let { (px, pst) ->
+                linkPaint.color = color
+                linkPaint.alpha = 110
+                canvas.drawLine(px, laneY(pst), px, y, linkPaint)
+            }
+            barPaint.color = color
+            rect.set(x0, y - barH / 2, maxOf(x1, x0 + 2 * dp), y + barH / 2)
+            canvas.drawRoundRect(rect, 4 * dp, 4 * dp, barPaint)
+            prevEnd = x1 to st
+            i = j + 1
+        }
+
+        // Russare: tacche in cima
         if (snoreH > 0) {
-            barPaint.color = COLOR_SNORE
-            s.snore.forEachIndexed { i, on ->
-                if (on) canvas.drawRect(i * barW, 0f, (i + 1) * barW + 0.5f, snoreH * 0.7f, barPaint)
+            s.snore.forEachIndexed { k, on ->
+                if (!on) return@forEachIndexed
+                rect.set(left + k * minW, 2 * dp, left + (k + 1) * minW + 0.5f, snoreH * 0.75f)
+                canvas.drawRoundRect(rect, 2 * dp, 2 * dp, snorePaint)
             }
         }
 
-        // Ore intere sull'asse orizzontale
+        // Ore
         val zone = ZoneId.systemDefault()
         var t = Instant.ofEpochMilli(s.start).atZone(zone).truncatedTo(ChronoUnit.HOURS).plusHours(1)
-        val minutes = stages.size
-        val step = if (minutes > 8 * 60) 2L else 1L
+        val step = if (stages.size > 8 * 60) 2L else 1L
         while (true) {
             val m = (t.toInstant().toEpochMilli() - s.start) / 60_000f
-            if (m >= minutes) break
-            val x = m * barW
-            canvas.drawLine(x, chartH, x, chartH + 4 * density, axisPaint)
+            if (m >= stages.size) break
+            val x = left + m * minW
             val label = "%02d".format(t.hour)
-            canvas.drawText(label, x - axisPaint.measureText(label) / 2, height - 4 * density, axisPaint)
+            canvas.drawText(label, x - textPaint.measureText(label) / 2, height - 4 * dp, textPaint)
             t = t.plusHours(step)
         }
 
-        // Momento della sveglia intelligente
+        // Sveglia intelligente
         if (s.smartWakeAt > 0) {
-            val x = (s.smartWakeAt - s.start) / 60_000f * barW
-            canvas.drawLine(x, 0f, x, chartH, markPaint)
+            val x = left + (s.smartWakeAt - s.start) / 60_000f * minW
+            canvas.drawLine(x, top, x, bottom, smartPaint)
+            canvas.drawCircle(x, top + 3 * dp, 4 * dp, smartPaint)
         }
     }
 }

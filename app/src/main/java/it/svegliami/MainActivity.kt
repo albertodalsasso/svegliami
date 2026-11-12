@@ -9,38 +9,60 @@ import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
-import android.widget.CheckBox
+import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
+import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.materialswitch.MaterialSwitch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import java.util.concurrent.Executors
 
-/** Elenco delle sveglie e località per il meteo. */
+/** Schermata principale: prossima sveglia, elenco sveglie, sonno e località. */
 class MainActivity : AppCompatActivity() {
     private lateinit var p: Prefs
     private val io = Executors.newSingleThreadExecutor()
+    private val handler = Handler(Looper.getMainLooper())
+    private val ticker = object : Runnable {
+        override fun run() {
+            renderHero()
+            handler.postDelayed(this, 30_000)
+        }
+    }
 
+    private lateinit var tvToday: TextView
+    private lateinit var cardPerms: MaterialCardView
+    private lateinit var tvPerms: TextView
+    private lateinit var hero: View
+    private lateinit var tvHeroTime: TextView
+    private lateinit var tvHeroWhen: TextView
+    private lateinit var tvHeroRain: TextView
+    private lateinit var tvHeroSmart: TextView
     private lateinit var alarmList: LinearLayout
     private lateinit var tvEmpty: TextView
-    private lateinit var etCity: EditText
-    private lateinit var tvPlace: TextView
-    private lateinit var btnGps: Button
-    private lateinit var cbAutoLoc: CheckBox
-    private lateinit var tvPerms: TextView
     private lateinit var tvSleep: TextView
     private lateinit var btnSleep: Button
-    private lateinit var rgSleepMode: RadioGroup
-    private lateinit var btnPerms: Button
+    private lateinit var toggleSleepMode: MaterialButtonToggleGroup
+    private lateinit var tvPlace: TextView
+    private lateinit var btnGps: Button
+    private lateinit var swAutoLoc: CompoundButton
+    private lateinit var etCity: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,54 +70,129 @@ class MainActivity : AppCompatActivity() {
         p = Prefs(this)
         AlarmService.ensureChannel(this)
 
+        tvToday = findViewById(R.id.tvToday)
+        cardPerms = findViewById(R.id.cardPerms)
+        tvPerms = findViewById(R.id.tvPerms)
+        hero = findViewById(R.id.hero)
+        tvHeroTime = findViewById(R.id.tvHeroTime)
+        tvHeroWhen = findViewById(R.id.tvHeroWhen)
+        tvHeroRain = findViewById(R.id.tvHeroRain)
+        tvHeroSmart = findViewById(R.id.tvHeroSmart)
         alarmList = findViewById(R.id.alarmList)
         tvEmpty = findViewById(R.id.tvEmpty)
-        etCity = findViewById(R.id.etCity)
-        tvPlace = findViewById(R.id.tvPlace)
-        btnGps = findViewById(R.id.btnGps)
-        cbAutoLoc = findViewById(R.id.cbAutoLoc)
-        tvPerms = findViewById(R.id.tvPerms)
-        btnPerms = findViewById(R.id.btnPerms)
         tvSleep = findViewById(R.id.tvSleep)
         btnSleep = findViewById(R.id.btnSleep)
-        btnSleep.setOnClickListener { toggleSleep() }
-        rgSleepMode = findViewById(R.id.rgSleepMode)
-        rgSleepMode.check(if (p.sleepUseMic) R.id.rbNightstand else R.id.rbBed)
-        rgSleepMode.setOnCheckedChangeListener { _, id ->
-            p.sleepUseMic = id == R.id.rbNightstand
-            renderSleep()
+        toggleSleepMode = findViewById(R.id.toggleSleepMode)
+        tvPlace = findViewById(R.id.tvPlace)
+        btnGps = findViewById(R.id.btnGps)
+        swAutoLoc = findViewById<MaterialSwitch>(R.id.swAutoLoc)
+        etCity = findViewById(R.id.etCity)
+
+        findViewById<View>(R.id.btnAdd).setOnClickListener {
+            startActivity(Intent(this, EditAlarmActivity::class.java))
         }
+        findViewById<Button>(R.id.btnPerms).setOnClickListener { issues().firstOrNull()?.fix?.invoke() }
+
+        // Sonno
+        btnSleep.setOnClickListener { toggleSleep() }
         findViewById<Button>(R.id.btnSleepHistory).setOnClickListener {
             startActivity(Intent(this, SleepActivity::class.java))
         }
-
-        updatePlaceLabel()
-        findViewById<Button>(R.id.btnAdd).setOnClickListener {
-            startActivity(Intent(this, EditAlarmActivity::class.java))
+        toggleSleepMode.check(if (p.sleepUseMic) R.id.btnModeNightstand else R.id.btnModeBed)
+        toggleSleepMode.addOnButtonCheckedListener { _, id, checked ->
+            if (checked) {
+                p.sleepUseMic = id == R.id.btnModeNightstand
+                renderSleep()
+            }
         }
+
+        // Località
+        updatePlaceLabel()
         findViewById<Button>(R.id.btnSearch).setOnClickListener { searchCity() }
-        btnPerms.setOnClickListener { issues().firstOrNull()?.fix?.invoke() }
         btnGps.setOnClickListener {
             if (LocationHelper.hasForeground(this)) locateNow(manual = true)
             else requestPermissions(FOREGROUND_LOC, REQ_LOC_GPS)
         }
-        cbAutoLoc.isChecked = p.autoLocation
-        cbAutoLoc.setOnCheckedChangeListener { _, checked ->
+        swAutoLoc.isChecked = p.autoLocation
+        swAutoLoc.setOnCheckedChangeListener { _, checked ->
             p.autoLocation = checked
             if (checked) ensureAutoLocationPermissions()
             Scheduler.rescheduleAll(this)
-            renderAlarms()
-            refreshPermissions()
+            renderAll()
         }
     }
 
     override fun onResume() {
         super.onResume()
+        tvToday.text = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN).format(LocalDate.now())
+        renderAll()
+        handler.post(ticker)
+        // Con l'aggiornamento automatico attivo, ogni apertura dell'app rileva la posizione fresca.
+        if (p.autoLocation && LocationHelper.hasForeground(this)) locateNow(manual = false)
+    }
+
+    override fun onPause() {
+        handler.removeCallbacks(ticker)
+        super.onPause()
+    }
+
+    private fun renderAll() {
+        renderHero()
         renderAlarms()
         renderSleep()
         refreshPermissions()
-        // Con l'aggiornamento automatico attivo, ogni apertura dell'app rileva la posizione fresca.
-        if (p.autoLocation && LocationHelper.hasForeground(this)) locateNow(manual = false)
+    }
+
+    // ---------- prossima sveglia ----------
+
+    /** Orario effettivo della prossima suoneria di una sveglia (anticipata se piove). */
+    private fun target(st: AlarmState) = if (st.earlyAt > 0) st.earlyAt else st.currentOccurrence
+
+    private fun renderHero() {
+        val now = System.currentTimeMillis()
+        val next = p.alarms.filter { it.enabled }
+            .map { it to p.state(it.id) }
+            .filter { (_, st) -> st.currentOccurrence > 0 }
+            .minByOrNull { (_, st) -> target(st) }
+
+        if (next == null) {
+            hero.setBackgroundResource(R.drawable.bg_hero_night)
+            tvHeroTime.text = "--:--"
+            tvHeroWhen.text = "Nessuna sveglia attiva"
+            tvHeroRain.visibility = View.GONE
+            tvHeroSmart.visibility = View.GONE
+            return
+        }
+        val (a, st) = next
+        val t = target(st)
+        val rainy = st.earlyAt > 0
+        hero.setBackgroundResource(if (rainy) R.drawable.bg_hero_rain else R.drawable.bg_hero_night)
+        tvHeroTime.text = Scheduler.fmtTime(t)
+        tvHeroWhen.text = "${dayWord(t)} · tra ${duration(t - now)}" + if (a.label.isNotBlank()) " · ${a.label}" else ""
+
+        tvHeroRain.visibility = View.VISIBLE
+        tvHeroRain.text = when {
+            rainy -> "☔  Anticipata per pioggia (era alle ${Scheduler.fmtTime(st.currentOccurrence)})"
+            p.hasLocation || p.autoLocation -> "☔  Se piove: alle ${Scheduler.fmtTime(st.currentOccurrence - a.advanceMin * 60_000L)}"
+            else -> "☁  Meteo non controllato: imposta la località"
+        }
+        tvHeroSmart.visibility = if (a.smartWindowMin > 0) View.VISIBLE else View.GONE
+        tvHeroSmart.text = "🌙  Sveglia intelligente dalle ${Scheduler.fmtTime(t - a.smartWindowMin * 60_000L)}"
+    }
+
+    private fun dayWord(ms: Long): String {
+        val d = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate()
+        val today = LocalDate.now()
+        return when (d) {
+            today -> "Oggi"
+            today.plusDays(1) -> "Domani"
+            else -> DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN).format(d).replaceFirstChar { it.uppercase() }
+        }
+    }
+
+    private fun duration(ms: Long): String {
+        val min = ((ms + 59_999) / 60_000).coerceAtLeast(0)
+        return if (min >= 60) "${min / 60} h ${min % 60} min" else "$min min"
     }
 
     // ---------- elenco sveglie ----------
@@ -107,22 +204,48 @@ class MainActivity : AppCompatActivity() {
         val inflater = LayoutInflater.from(this)
         for (a in alarms) {
             val v = inflater.inflate(R.layout.item_alarm, alarmList, false)
+            val st = p.state(a.id)
             v.findViewById<TextView>(R.id.tvTime).text = a.timeText
-            v.findViewById<TextView>(R.id.tvLabel).apply {
-                text = a.label
-                visibility = if (a.label.isBlank()) View.GONE else View.VISIBLE
+            v.findViewById<TextView>(R.id.tvLabel).text = a.label.ifBlank { "Sveglia" }
+            fillDayDots(v.findViewById(R.id.dayRow), a)
+
+            val occ = st.currentOccurrence
+            v.findViewById<TextView>(R.id.tvInfo).text = when {
+                !a.enabled -> "Disattivata"
+                occ == 0L -> "Nessuna occorrenza programmata"
+                else -> "Prossima: ${Scheduler.fmtDayTime(occ)}"
             }
-            v.findViewById<TextView>(R.id.tvDays).text = a.daysText
-            v.findViewById<TextView>(R.id.tvInfo).text = statusLine(a)
-            v.alpha = if (a.enabled) 1f else 0.55f
-            v.findViewById<SwitchCompat>(R.id.swEnabled).apply {
+            val active = a.enabled && occ > 0
+            v.findViewById<TextView>(R.id.badgeRain).apply {
+                when {
+                    !active || !(p.hasLocation || p.autoLocation) -> visibility = View.GONE
+                    st.earlyAt > 0 -> {
+                        visibility = View.VISIBLE
+                        text = "☔ Anticipata alle ${Scheduler.fmtTime(st.earlyAt)}"
+                        setBackgroundResource(R.drawable.bg_badge_early)
+                        setTextColor(getColor(R.color.on_primary_container))
+                    }
+                    else -> {
+                        visibility = View.VISIBLE
+                        text = "☔ Se piove: ${Scheduler.fmtTime(occ - a.advanceMin * 60_000L)}"
+                        setBackgroundResource(R.drawable.bg_badge_rain)
+                        setTextColor(getColor(R.color.on_secondary_container))
+                    }
+                }
+            }
+            v.findViewById<TextView>(R.id.badgeSmart).apply {
+                visibility = if (active && a.smartWindowMin > 0) View.VISIBLE else View.GONE
+                text = "🌙 Intelligente · ${a.smartWindowMin} min"
+            }
+            v.alpha = if (a.enabled) 1f else 0.5f
+            v.findViewById<MaterialSwitch>(R.id.swEnabled).apply {
                 isChecked = a.enabled
                 setOnCheckedChangeListener { _, checked ->
                     a.enabled = checked
                     if (checked) p.state(a.id).handledOccurrence = 0
                     p.saveAlarm(a)
                     Scheduler.reschedule(this@MainActivity, a.id)
-                    alarmList.post { renderAlarms() }
+                    alarmList.post { renderAll() }
                 }
             }
             v.setOnClickListener {
@@ -132,58 +255,64 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun statusLine(a: Alarm): String {
-        val st = p.state(a.id)
-        val occ = st.currentOccurrence
-        if (!a.enabled || occ == 0L) return "Disattivata"
-        val sb = StringBuilder("Prossima: ${Scheduler.fmtDayTime(occ)}")
-        when {
-            st.earlyAt > 0 -> sb.append("\n☔ Anticipata alle ${Scheduler.fmtTime(st.earlyAt)} per pioggia")
-            p.hasLocation || p.autoLocation ->
-                sb.append("\nSe piove: alle ${Scheduler.fmtTime(occ - a.advanceMin * 60_000L)}")
-            else -> sb.append("\nMeteo non controllato: imposta la località")
+    /** Sette pallini L M M G V S D, pieni per i giorni attivi. */
+    private fun fillDayDots(row: LinearLayout, a: Alarm) {
+        row.removeAllViews()
+        val size = (26 * resources.displayMetrics.density).toInt()
+        val gap = (6 * resources.displayMetrics.density).toInt()
+        listOf("L", "M", "M", "G", "V", "S", "D").forEachIndexed { i, letter ->
+            val on = (i + 1) in a.days
+            row.addView(TextView(this).apply {
+                text = letter
+                gravity = Gravity.CENTER
+                textSize = 12f
+                setBackgroundResource(if (on) R.drawable.bg_day_on else R.drawable.bg_day_off)
+                setTextColor(getColor(if (on) R.color.on_primary else R.color.on_surface_variant))
+                layoutParams = LinearLayout.LayoutParams(size, size).apply { marginEnd = gap }
+            })
         }
-        if (a.smartWindowMin > 0) {
-            val target = if (st.earlyAt > 0) st.earlyAt else occ
-            sb.append("\n🌙 Intelligente: dalle ${Scheduler.fmtTime(target - a.smartWindowMin * 60_000L)} se dormi leggero")
+        if (a.days.isEmpty()) {
+            row.addView(TextView(this).apply {
+                text = "Una volta"
+                setTextColor(getColor(R.color.on_surface_variant))
+                textSize = 12f
+                gravity = Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, size)
+            })
         }
-        return sb.toString()
     }
 
     // ---------- sonno ----------
 
     private fun renderSleep() {
         val running = SleepService.isRunning
-        for (i in 0 until rgSleepMode.childCount) rgSleepMode.getChildAt(i).isEnabled = !running
+        for (i in 0 until toggleSleepMode.childCount) toggleSleepMode.getChildAt(i).isEnabled = !running
         if (running) {
             val how = if (SleepService.usingMic) "col microfono" else "con l'accelerometro"
-            tvSleep.text = "🌙 Monitoraggio $how attivo dalle ${Scheduler.fmtTime(SleepService.startedAt)}. " +
+            tvSleep.text = "🌙 Monitoraggio $how attivo dalle ${Scheduler.fmtTime(SleepService.startedAt)}.\n" +
                 "Si ferma da solo quando suona la sveglia."
             btnSleep.text = "Ferma il monitoraggio"
         } else {
-            val smart = p.alarms.filter { it.enabled && it.smartWindowMin > 0 }
-            tvSleep.text = if (smart.isEmpty()) {
-                "Registra i movimenti della notte. Attiva la sveglia intelligente in una sveglia per farti svegliare nel sonno leggero."
+            val where = if (p.sleepUseMic) "sul comodino, con il microfono verso il letto" else "sul materasso, vicino al cuscino"
+            tvSleep.text = if (p.alarms.none { it.enabled && it.smartWindowMin > 0 }) {
+                "Registra la tua notte. Attiva la sveglia intelligente in una sveglia per svegliarti nel sonno leggero."
             } else {
-                "Prima di dormire premi «Buonanotte» e metti il telefono " +
-                    (if (p.sleepUseMic) "sul comodino, con il microfono verso il letto" else "sul materasso, vicino al cuscino") +
-                    " (meglio in carica)."
+                "Prima di dormire premi «Buonanotte» e metti il telefono $where (meglio in carica)."
             }
-            btnSleep.text = "🌙 Buonanotte: avvia il monitoraggio"
+            btnSleep.text = "🌙  Buonanotte"
         }
     }
 
     private fun toggleSleep() {
-        if (SleepService.isRunning) {
-            SleepService.stop()
-        } else if (p.sleepUseMic && !SleepService.hasMicPermission(this)) {
-            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC)
-            return
-        } else {
-            startSleep()
-            return
+        when {
+            SleepService.isRunning -> {
+                SleepService.stop()
+                btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
+            }
+            p.sleepUseMic && !SleepService.hasMicPermission(this) ->
+                requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC)
+            else -> startSleep()
         }
-        btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
     }
 
     private fun startSleep() {
@@ -196,13 +325,13 @@ class MainActivity : AppCompatActivity() {
     // ---------- località ----------
 
     private fun updatePlaceLabel() {
-        tvPlace.text = if (p.hasLocation) "📍 ${p.placeName}" else "Nessuna località impostata"
+        tvPlace.text = if (p.hasLocation) "📍 ${p.placeName}" else "📍 Nessuna località impostata"
     }
 
     private fun onLocationChanged() {
         updatePlaceLabel()
         Scheduler.rescheduleAll(this)
-        renderAlarms()
+        renderAll()
     }
 
     private fun searchCity() {
@@ -223,7 +352,7 @@ class MainActivity : AppCompatActivity() {
                                 val pl = places[i]
                                 p.placeName = pl.name; p.lat = pl.lat; p.lon = pl.lon
                                 p.locationTime = 0
-                                cbAutoLoc.isChecked = false // località scelta a mano: niente aggiornamento GPS
+                                swAutoLoc.isChecked = false // località scelta a mano: niente aggiornamento GPS
                                 onLocationChanged()
                             }
                             .show()
@@ -312,7 +441,7 @@ class MainActivity : AppCompatActivity() {
             list += Issue("Posizione in background non consentita (aggiornamento automatico)") { askBackgroundLocation() }
         }
         if (!getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)) {
-            list += Issue("Ottimizzazione batteria attiva (il controllo meteo notturno potrebbe non avere rete)") {
+            list += Issue("Ottimizzazione batteria attiva: il controllo meteo notturno potrebbe non avere rete") {
                 @Suppress("BatteryLife")
                 startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
             }
@@ -322,10 +451,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun refreshPermissions() {
         val list = issues()
-        val visible = if (list.isEmpty()) View.GONE else View.VISIBLE
-        tvPerms.visibility = visible
-        btnPerms.visibility = visible
-        tvPerms.text = list.joinToString("\n") { "⚠ ${it.label}" }
+        cardPerms.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
+        tvPerms.text = list.joinToString("\n") { "⚠  ${it.label}" }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -337,11 +464,11 @@ class MainActivity : AppCompatActivity() {
                 else Toast.makeText(this, "Permesso di posizione negato", Toast.LENGTH_SHORT).show()
             REQ_LOC_AUTO ->
                 if (ok) ensureAutoLocationPermissions()
-                else cbAutoLoc.isChecked = false
+                else swAutoLoc.isChecked = false
             REQ_LOC_BG -> if (ok) locateNow(manual = false)
             REQ_MIC ->
                 if (ok) startSleep()
-                else Toast.makeText(this, "Senza microfono usa la modalità «sul materasso»", Toast.LENGTH_LONG).show()
+                else Toast.makeText(this, "Senza microfono usa la modalità «Materasso»", Toast.LENGTH_LONG).show()
         }
         refreshPermissions()
     }

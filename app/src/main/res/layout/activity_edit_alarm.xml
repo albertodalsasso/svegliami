@@ -1,144 +1,246 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/night_bg"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:layout_height="?attr/actionBarSize"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:titleTextColor="@color/on_surface" />
 
-        <EditText
-            android:id="@+id/etLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Nome (facoltativo, es. Lavoro)"
-            android:inputType="textCapSentences" />
-
-        <Button
-            android:id="@+id/btnTime"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:textSize="64sp" />
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="32dp">
 
-            <CheckBox android:id="@+id/d1" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="L" />
-            <CheckBox android:id="@+id/d2" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="M" />
-            <CheckBox android:id="@+id/d3" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="M" />
-            <CheckBox android:id="@+id/d4" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="G" />
-            <CheckBox android:id="@+id/d5" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="V" />
-            <CheckBox android:id="@+id/d6" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="S" />
-            <CheckBox android:id="@+id/d7" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="D" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvDaysHint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="13sp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="Se piove, anticipa di:" />
-
-        <Spinner
-            android:id="@+id/spAdvance"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="🌙 Sveglia intelligente (sonno leggero):" />
-
-        <Spinner
-            android:id="@+id/spSmart"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Funziona se la sera avvii «Buonanotte» nella sezione Sonno, con il telefono sul materasso o sul comodino."
-            android:textSize="13sp" />
-
-        <TextView
-            android:id="@+id/tvProb"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" />
-
-        <SeekBar
-            android:id="@+id/sbProb"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="Suoneria" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btnRingtone"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="0dp"
+            <!-- Orario e nome -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:maxLines="1" />
+                android:background="@drawable/bg_hero_night"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="20dp">
 
-            <Button
-                android:id="@+id/btnPreview"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                <TextView
+                    android:id="@+id/btnTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:fontFamily="sans-serif-light"
+                    android:includeFontPadding="false"
+                    android:paddingHorizontal="16dp"
+                    android:textColor="#FFFFFF"
+                    android:textSize="76sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tocca l'orario per cambiarlo"
+                    android:textColor="#AAFFFFFF"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center"
+                    android:hint="Nome (facoltativo, es. Lavoro)"
+                    android:inputType="textCapSentences"
+                    android:textColor="#FFFFFF"
+                    android:textColorHint="#88FFFFFF" />
+            </LinearLayout>
+
+            <!-- Giorni -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+            <TextView
+                style="@style/Svegliami.Overline"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="▶ Prova" />
+                android:layout_marginBottom="8dp"
+                android:text="Ripeti" />
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipDays"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:id="@+id/tvDaysHint"
+                        style="@style/Svegliami.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Pioggia -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+            <TextView
+                style="@style/Svegliami.Overline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="☔  Se piove, anticipa di" />
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipAdvance"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:selectionRequired="true"
+                        app:singleSelection="true" />
+
+                    <TextView
+                        android:id="@+id/tvProb"
+                        style="@style/Svegliami.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/sliderProb"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:stepSize="10"
+                        android:valueFrom="10"
+                        android:valueTo="100"
+                        app:labelBehavior="gone" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Sveglia intelligente -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+            <TextView
+                style="@style/Svegliami.Overline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="🌙  Sveglia intelligente" />
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipSmart"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:selectionRequired="true"
+                        app:singleSelection="true" />
+
+                    <TextView
+                        style="@style/Svegliami.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Ti sveglia nel sonno leggero entro la finestra scelta. Funziona se la sera avvii «Buonanotte» nella sezione Sonno, con il telefono sul materasso o sul comodino." />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Suoneria -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+            <TextView
+                style="@style/Svegliami.Overline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="🔔  Suoneria" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnRingtone"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="1" />
+
+                        <Button
+                            android:id="@+id/btnPreview"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="▶ Prova" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="24dp"
+                android:text="Salva"
+                android:textSize="17sp" />
+
+            <Button
+                android:id="@+id/btnTest"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="☁  Controlla il meteo adesso" />
+
+            <Button
+                android:id="@+id/btnDelete"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Elimina sveglia"
+                android:textColor="@color/error" />
+
+            <TextView
+                android:id="@+id/tvStatus"
+                style="@style/Svegliami.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" />
         </LinearLayout>
-
-        <Button
-            android:id="@+id/btnSave"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Salva" />
-
-        <Button
-            android:id="@+id/btnTest"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Controlla il meteo adesso" />
-
-        <Button
-            android:id="@+id/btnDelete"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Elimina sveglia"
-            android:textColor="#C62828" />
-
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:textSize="14sp" />
-    </LinearLayout>
-</ScrollView>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>
