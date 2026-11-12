@@ -23,7 +23,20 @@ jobs:
         with:
           gradle-version: "8.11.1"
 
+      - name: Chiave di firma
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/svegliami.jks"
+            echo "SIGNING_KEYSTORE=$RUNNER_TEMP/svegliami.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Segreto SIGNING_KEYSTORE_BASE64 mancante: APK con firma temporanea, non verrà pubblicato"
+          fi
+
       - name: Test e build
+        env:
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: gradle testDebugUnitTest assembleDebug
 
       - uses: actions/upload-artifact@v4
@@ -34,7 +47,8 @@ jobs:
       # Su main: pubblica l'APK come release "apk", con link diretto e fisso:
       # https://github.com/<utente>/<repo>/releases/download/apk/svegliami.apk
       - name: Pubblica l'APK come release
-        if: github.ref == 'refs/heads/main'
+        # Solo con la chiave fissa: altrimenti l'APK non si installerebbe sopra il precedente.
+        if: github.ref == 'refs/heads/main' && env.SIGNING_KEYSTORE != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

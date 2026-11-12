@@ -15,7 +15,26 @@ android {
         versionName = "1.0"
     }
 
+    // Chiave di firma fissa (da variabili d'ambiente, in CI dai segreti del repository).
+    // Senza una chiave fissa ogni build avrebbe una firma diversa e Android
+    // rifiuterebbe l'aggiornamento ("pacchetto in conflitto").
+    val signingKeystore = System.getenv("SIGNING_KEYSTORE")
+    val signingPassword = System.getenv("SIGNING_PASSWORD")
+    signingConfigs {
+        if (signingKeystore != null && signingPassword != null) {
+            create("fixed") {
+                storeFile = file(signingKeystore)
+                storePassword = signingPassword
+                keyAlias = "svegliami"
+                keyPassword = signingPassword
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfigs.findByName("fixed")?.let { signingConfig = it }
+        }
         release {
             isMinifyEnabled = false
         }
