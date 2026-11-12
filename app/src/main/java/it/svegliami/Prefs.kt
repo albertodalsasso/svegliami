@@ -51,6 +51,11 @@ class Prefs(ctx: Context) {
         get() = sp.getLong("locationTime", 0)
         set(v) = sp.edit().putLong("locationTime", v).apply()
 
+    /** URI della suoneria scelta (vuoto = suoneria sveglia predefinita del telefono). */
+    var ringtoneUri: String
+        get() = sp.getString("ringtoneUri", "")!!
+        set(v) = sp.edit().putString("ringtoneUri", v).apply()
+
     // --- stato ---
     /** Orario (epoch ms) della sveglia normale attualmente programmata. */
     var currentOccurrence: Long

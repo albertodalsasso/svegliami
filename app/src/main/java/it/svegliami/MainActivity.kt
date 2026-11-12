@@ -11,6 +11,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.location.Location
+import android.media.Ringtone
+import android.media.RingtoneManager
+import androidx.activity.result.contract.ActivityResultContracts
 import android.provider.Settings
 import android.view.View
 import android.widget.ArrayAdapter
@@ -44,6 +47,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvPlace: TextView
     private lateinit var btnGps: Button
     private lateinit var cbAutoLoc: CheckBox
+    private lateinit var btnRingtone: Button
+    private lateinit var btnPreview: Button
+    private var preview: Ringtone? = null
+
+    private val pickRingtone = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        if (res.resultCode != RESULT_OK) return@registerForActivityResult
+        val uri: Uri? = res.data?.let {
+            @Suppress("DEPRECATION")
+            it.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+        }
+        // "Predefinita" o nessuna scelta → stringa vuota (segue la suoneria sveglia del telefono)
+        p.ringtoneUri = if (uri == null || RingtoneManager.isDefault(uri)) "" else uri.toString()
+        updateRingtoneLabel()
+        if (Ringtones.needsStoragePermission(this)) requestPermissions(arrayOf(Ringtones.storagePermission()), REQ_AUDIO)
+        refreshPermissions()
+    }
     private lateinit var tvStatus: TextView
     private lateinit var tvPerms: TextView
     private lateinit var btnPerms: Button
@@ -64,6 +83,11 @@ class MainActivity : AppCompatActivity() {
         tvPlace = findViewById(R.id.tvPlace)
         btnGps = findViewById(R.id.btnGps)
         cbAutoLoc = findViewById(R.id.cbAutoLoc)
+        btnRingtone = findViewById(R.id.btnRingtone)
+        btnPreview = findViewById(R.id.btnPreview)
+        updateRingtoneLabel()
+        btnRingtone.setOnClickListener { openRingtonePicker() }
+        btnPreview.setOnClickListener { togglePreview() }
         tvStatus = findViewById(R.id.tvStatus)
         tvPerms = findViewById(R.id.tvPerms)
         btnPerms = findViewById(R.id.btnPerms)
@@ -121,6 +145,43 @@ class MainActivity : AppCompatActivity() {
     private fun updateProbLabel() { tvProb.text = "Anticipa anche se la probabilità di pioggia è ≥ ${probValue()}%" }
     private fun updatePlaceLabel() {
         tvPlace.text = if (p.hasLocation) "📍 ${p.placeName}" else "Nessuna località impostata"
+    }
+
+    // ---------- suoneria ----------
+
+    private fun updateRingtoneLabel() { btnRingtone.text = "🔔 ${Ringtones.title(this)}" }
+
+    private fun openRingtonePicker() {
+        stopPreview()
+        val current = p.ringtoneUri.takeIf { it.isNotEmpty() }?.let(Uri::parse)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+            .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM or RingtoneManager.TYPE_RINGTONE)
+            .putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Suoneria della sveglia")
+            .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+            .putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
+            .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+            .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, current)
+        runCatching { pickRingtone.launch(intent) }
+            .onFailure { Toast.makeText(this, "Selettore suonerie non disponibile", Toast.LENGTH_SHORT).show() }
+    }
+
+    private fun togglePreview() {
+        if (preview?.isPlaying == true) { stopPreview(); return }
+        preview = Ringtones.preview(this)
+        if (preview == null) Toast.makeText(this, "Impossibile riprodurre la suoneria", Toast.LENGTH_SHORT).show()
+        else btnPreview.text = "■ Stop"
+    }
+
+    private fun stopPreview() {
+        preview?.stop()
+        preview = null
+        btnPreview.text = "▶ Prova"
+    }
+
+    override fun onPause() {
+        stopPreview()
+        super.onPause()
     }
 
     // ---------- posizione GPS ----------
@@ -293,6 +354,11 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$packageName")))
             }
         }
+        if (Ringtones.needsStoragePermission(this)) {
+            list += Issue("Accesso ai file audio non consentito (la suoneria scelta non può suonare)") {
+                requestPermissions(arrayOf(Ringtones.storagePermission()), REQ_AUDIO)
+            }
+        }
         if (p.autoLocation && !LocationHelper.hasBackground(this)) {
             list += Issue("Posizione in background non consentita (aggiornamento automatico)") { askBackgroundLocation() }
         }
@@ -336,6 +402,7 @@ class MainActivity : AppCompatActivity() {
         private const val REQ_LOC_GPS = 2
         private const val REQ_LOC_AUTO = 3
         private const val REQ_LOC_BG = 4
+        private const val REQ_AUDIO = 5
         private val FOREGROUND_LOC = arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,

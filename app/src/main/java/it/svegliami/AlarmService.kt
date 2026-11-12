@@ -106,10 +106,14 @@ class AlarmService : Service() {
     }
 
     private fun playSound() {
-        val uri = RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-        player = try {
+        val chosen = Prefs(this).ringtoneUri.takeIf { it.isNotEmpty() }?.let { android.net.Uri.parse(it) }
+        // Se la suoneria scelta non è più leggibile (file cancellato, permesso mancante) usa quella predefinita.
+        player = chosen?.let { tryPlay(it) } ?: tryPlay(Ringtones.defaultAlarmUri(this))
+    }
+
+    private fun tryPlay(uri: android.net.Uri?): MediaPlayer? {
+        if (uri == null) return null
+        return try {
             MediaPlayer().apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
