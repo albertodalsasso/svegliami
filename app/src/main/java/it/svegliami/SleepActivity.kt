@@ -70,7 +70,8 @@ class SleepActivity : AppCompatActivity() {
             append("A letto: ${Scheduler.fmtTime(s.start)}–${Scheduler.fmtTime(s.end)} (${hm(sum.inBedMin)})\n")
             append("Sonno stimato: ${hm(sum.asleepMin)}\n")
             append("Profondo ${hm(sum.deepMin)} · Leggero ${hm(sum.lightMin)} · Sveglio ${hm(sum.awakeMin)}\n")
-            append("Risvegli: ${sum.awakenings}")
+            append("Risvegli: ${sum.awakenings}\n")
+            append(if (s.mic) "Telefono sul comodino (microfono)" else "Telefono sul materasso (accelerometro)")
             if (s.smartWakeAt > 0) append("\n🌙 Sveglia intelligente alle ${Scheduler.fmtTime(s.smartWakeAt)} (linea rosa)")
         }
     }

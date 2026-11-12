@@ -64,6 +64,25 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp" />
 
+        <RadioGroup
+            android:id="@+id/rgSleepMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp">
+
+            <RadioButton
+                android:id="@+id/rbBed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Telefono sul materasso (accelerometro)" />
+
+            <RadioButton
+                android:id="@+id/rbNightstand"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Telefono sul comodino (microfono, nessuna registrazione)" />
+        </RadioGroup>
+
         <Button
             android:id="@+id/btnSleep"
             android:layout_width="match_parent"

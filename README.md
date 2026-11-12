@@ -10,9 +10,11 @@ Esempio: sveglia alle 07:00 con anticipo di 30 minuti.
 La sveglia normale è **sempre** programmata. Se meteo o rete non funzionano, suoni comunque all'orario normale.
 
 ## Sveglia intelligente e monitoraggio del sonno
-Senza smartwatch: il telefono sul materasso registra i movimenti con l'accelerometro.
+Senza smartwatch, in due modi a scelta:
+- **Sul materasso** (accelerometro): il telefono sente le vibrazioni quando ti muovi.
+- **Sul comodino** (microfono): l'app misura solo il **volume** ogni 100 ms (fruscio di lenzuola e coperte) rispetto al rumore di fondo della stanza. **L'audio non viene mai registrato né salvato**, resta solo un punteggio al minuto. Rumori costanti come un ventilatore non contano, ma un partner o un animale nella stanza possono disturbare la misura.
 1. In una sveglia scegli **🌙 Sveglia intelligente**: fino a 10/20/30/45 minuti prima.
-2. La sera premi **🌙 Buonanotte** nella schermata principale e lascia il telefono sul materasso, vicino al cuscino (meglio in carica).
+2. La sera scegli dove metti il telefono, premi **🌙 Buonanotte** e lascialo sul materasso vicino al cuscino oppure sul comodino (meglio in carica).
 3. Nella finestra, al primo movimento (sonno leggero) la sveglia suona. Se non ti muovi, suona comunque all'orario previsto.
    Se piove, la finestra si sposta prima insieme alla sveglia: per questo il controllo meteo avviene prima dell'inizio della finestra.
 4. Il monitoraggio si ferma da solo quando suona la sveglia. In **Storico del sonno** trovi il grafico di ogni notte con le fasi stimate (profondo, leggero, sveglio), il tempo a letto, il sonno stimato e i risvegli.

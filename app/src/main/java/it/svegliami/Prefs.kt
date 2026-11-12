@@ -161,6 +161,13 @@ class Prefs(ctx: Context) {
         get() = sp.getLong("locationTime", 0)
         set(v) = sp.edit().putLong("locationTime", v).apply()
 
+    // --- monitoraggio del sonno ---
+
+    /** true = telefono sul comodino (microfono), false = sul materasso (accelerometro). */
+    var sleepUseMic: Boolean
+        get() = sp.getBoolean("sleepUseMic", false)
+        set(v) = sp.edit().putBoolean("sleepUseMic", v).apply()
+
     // --- cache previsioni ---
 
     var cacheJson: String

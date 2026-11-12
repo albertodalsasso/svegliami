@@ -39,3 +39,23 @@ class SleepAnalyzerTest {
         assertTrue(SleepAnalyzer.shouldWake(5f))
     }
 }
+
+class MicScoreTest {
+    @Test fun `stanza silenziosa punteggio zero`() {
+        val levels = List(600) { 30f + (it % 3) }
+        val base = SleepAnalyzer.percentile(levels, 0.1f)
+        assertEquals(0f, SleepAnalyzer.micScore(levels, base), 0.001f)
+    }
+
+    @Test fun `fruscio sopra il fondo conta come movimento`() {
+        // 60 decimi di secondo (6 s) di rumore 12 dB sopra il fondo su 600
+        val levels = List(540) { 30f } + List(60) { 42f }
+        val base = SleepAnalyzer.percentile(levels, 0.1f)
+        assertEquals(10f, SleepAnalyzer.micScore(levels, base), 0.01f)
+    }
+
+    @Test fun `rumore costante come un ventilatore non conta`() {
+        val levels = List(600) { 50f }
+        assertEquals(0f, SleepAnalyzer.micScore(levels, SleepAnalyzer.percentile(levels, 0.1f)), 0.001f)
+    }
+}

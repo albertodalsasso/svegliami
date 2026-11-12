@@ -17,6 +17,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -38,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvPerms: TextView
     private lateinit var tvSleep: TextView
     private lateinit var btnSleep: Button
+    private lateinit var rgSleepMode: RadioGroup
     private lateinit var btnPerms: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,6 +59,12 @@ class MainActivity : AppCompatActivity() {
         tvSleep = findViewById(R.id.tvSleep)
         btnSleep = findViewById(R.id.btnSleep)
         btnSleep.setOnClickListener { toggleSleep() }
+        rgSleepMode = findViewById(R.id.rgSleepMode)
+        rgSleepMode.check(if (p.sleepUseMic) R.id.rbNightstand else R.id.rbBed)
+        rgSleepMode.setOnCheckedChangeListener { _, id ->
+            p.sleepUseMic = id == R.id.rbNightstand
+            renderSleep()
+        }
         findViewById<Button>(R.id.btnSleepHistory).setOnClickListener {
             startActivity(Intent(this, SleepActivity::class.java))
         }
@@ -145,8 +153,11 @@ class MainActivity : AppCompatActivity() {
     // ---------- sonno ----------
 
     private fun renderSleep() {
-        if (SleepService.isRunning) {
-            tvSleep.text = "🌙 Monitoraggio attivo dalle ${Scheduler.fmtTime(SleepService.startedAt)}. " +
+        val running = SleepService.isRunning
+        for (i in 0 until rgSleepMode.childCount) rgSleepMode.getChildAt(i).isEnabled = !running
+        if (running) {
+            val how = if (SleepService.usingMic) "col microfono" else "con l'accelerometro"
+            tvSleep.text = "🌙 Monitoraggio $how attivo dalle ${Scheduler.fmtTime(SleepService.startedAt)}. " +
                 "Si ferma da solo quando suona la sveglia."
             btnSleep.text = "Ferma il monitoraggio"
         } else {
@@ -154,7 +165,9 @@ class MainActivity : AppCompatActivity() {
             tvSleep.text = if (smart.isEmpty()) {
                 "Registra i movimenti della notte. Attiva la sveglia intelligente in una sveglia per farti svegliare nel sonno leggero."
             } else {
-                "Prima di dormire premi «Buonanotte» e metti il telefono sul materasso, vicino al cuscino (meglio in carica)."
+                "Prima di dormire premi «Buonanotte» e metti il telefono " +
+                    (if (p.sleepUseMic) "sul comodino, con il microfono verso il letto" else "sul materasso, vicino al cuscino") +
+                    " (meglio in carica)."
             }
             btnSleep.text = "🌙 Buonanotte: avvia il monitoraggio"
         }
@@ -163,10 +176,20 @@ class MainActivity : AppCompatActivity() {
     private fun toggleSleep() {
         if (SleepService.isRunning) {
             SleepService.stop()
+        } else if (p.sleepUseMic && !SleepService.hasMicPermission(this)) {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC)
+            return
         } else {
-            SleepService.start(this)
-            Toast.makeText(this, "Metti il telefono sul materasso, vicino al cuscino. Buonanotte!", Toast.LENGTH_LONG).show()
+            startSleep()
+            return
         }
+        btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
+    }
+
+    private fun startSleep() {
+        SleepService.start(this)
+        val where = if (p.sleepUseMic) "sul comodino, vicino al letto" else "sul materasso, vicino al cuscino"
+        Toast.makeText(this, "Metti il telefono $where. Buonanotte!", Toast.LENGTH_LONG).show()
         btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
     }
 
@@ -316,6 +339,9 @@ class MainActivity : AppCompatActivity() {
                 if (ok) ensureAutoLocationPermissions()
                 else cbAutoLoc.isChecked = false
             REQ_LOC_BG -> if (ok) locateNow(manual = false)
+            REQ_MIC ->
+                if (ok) startSleep()
+                else Toast.makeText(this, "Senza microfono usa la modalità «sul materasso»", Toast.LENGTH_LONG).show()
         }
         refreshPermissions()
     }
@@ -331,6 +357,7 @@ class MainActivity : AppCompatActivity() {
         private const val REQ_LOC_AUTO = 3
         private const val REQ_LOC_BG = 4
         private const val REQ_AUDIO = 5
+        private const val REQ_MIC = 6
         private val FOREGROUND_LOC = arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,

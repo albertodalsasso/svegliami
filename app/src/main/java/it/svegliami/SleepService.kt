@@ -6,8 +6,14 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.MediaRecorder
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -20,6 +26,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import kotlin.math.log10
 import kotlin.math.sqrt
 
 /**
@@ -33,12 +40,21 @@ class SleepService : Service(), SensorEventListener {
         private const val CHANNEL_ID = "sleep"
         private const val NOTIF_ID = 43
         private const val MAX_DURATION_MS = 14 * 3600_000L
+        private const val SAMPLE_RATE = 16_000
+        /** 100 ms di audio per lettura → 600 livelli al minuto. */
+        private const val CHUNK = SAMPLE_RATE / 10
+        /** Minuti su cui si stima il rumore di fondo della stanza. */
+        private const val FLOOR_MINUTES = 10
+
+        fun hasMicPermission(ctx: Context) =
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
         @Volatile
         private var instance: SleepService? = null
 
         val isRunning get() = instance != null
         val startedAt get() = instance?.startTime ?: 0L
+        val usingMic get() = instance?.micMode == true
 
         fun start(ctx: Context) =
             ContextCompat.startForegroundService(ctx, Intent(ctx, SleepService::class.java).setAction(ACTION_START))
@@ -60,6 +76,12 @@ class SleepService : Service(), SensorEventListener {
     private var last: FloatArray? = null
     private var smartWakeAt = 0L
 
+    // Modalità microfono: solo il livello (dB) di ogni blocco da 100 ms, mai l'audio.
+    private var micMode = false
+    @Volatile private var recording = false
+    private val micLevels = ArrayList<Float>()
+    private val recentFloors = ArrayDeque<Float>()
+
     private val tick = object : Runnable {
         override fun run() {
             onMinute()
@@ -74,6 +96,7 @@ class SleepService : Service(), SensorEventListener {
             finish()
             return START_NOT_STICKY
         }
+        if (instance == null) micMode = Prefs(this).sleepUseMic && hasMicPermission(this)
         goForeground()
         if (instance == null) begin()
         return START_NOT_STICKY
@@ -91,12 +114,16 @@ class SleepService : Service(), SensorEventListener {
         val notif: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_alarm)
             .setContentTitle("🌙 Monitoraggio del sonno attivo")
-            .setContentText("Lascia il telefono sul materasso, vicino al cuscino")
+            .setContentText(
+                if (micMode) "Telefono sul comodino: misuro solo il volume, nessuna registrazione"
+                else "Lascia il telefono sul materasso, vicino al cuscino",
+            )
             .setOngoing(true)
             .setContentIntent(open)
             .addAction(0, "Ferma", stop)
             .build()
-        val type = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH else 0
+        var type = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH else 0
+        if (micMode && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
         ServiceCompat.startForeground(this, NOTIF_ID, notif, type)
     }
 
@@ -109,12 +136,71 @@ class SleepService : Service(), SensorEventListener {
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "svegliami:sleep")
             .apply { acquire(MAX_DURATION_MS) }
+        recentFloors.clear()
+        synchronized(micLevels) { micLevels.clear() }
+        if (micMode) startMic() else startAccelerometer()
+        handler.postDelayed(tick, 60_000)
+        handler.postDelayed({ finish() }, MAX_DURATION_MS)
+    }
+
+    private fun startAccelerometer() {
         sensorManager = getSystemService(SensorManager::class.java)
         sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let {
             sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
         }
-        handler.postDelayed(tick, 60_000)
-        handler.postDelayed({ finish() }, MAX_DURATION_MS)
+    }
+
+    @SuppressLint("MissingPermission") // verificato in onStartCommand
+    private fun createRecorder(): AudioRecord? {
+        val minBuf = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
+        if (minBuf <= 0) return null
+        // VOICE_RECOGNITION di solito non ha il controllo automatico del volume: livelli più confrontabili.
+        for (source in listOf(MediaRecorder.AudioSource.VOICE_RECOGNITION, MediaRecorder.AudioSource.MIC)) {
+            val rec = runCatching {
+                AudioRecord(source, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, maxOf(minBuf, CHUNK * 4))
+            }.getOrNull()
+            if (rec?.state == AudioRecord.STATE_INITIALIZED) return rec
+            rec?.release()
+        }
+        return null
+    }
+
+    private fun startMic() {
+        recording = true
+        Thread({
+            val rec = createRecorder()
+            if (rec == null) {
+                // Microfono non disponibile: passa all'accelerometro.
+                handler.post { if (instance === this) { micMode = false; startAccelerometer() } }
+                return@Thread
+            }
+            val buf = ShortArray(CHUNK)
+            try {
+                rec.startRecording()
+                while (recording) {
+                    val n = rec.read(buf, 0, buf.size)
+                    if (n <= 0) continue
+                    var sum = 0.0
+                    for (i in 0 until n) sum += buf[i].toDouble() * buf[i]
+                    val db = (20 * log10(sqrt(sum / n) + 1.0)).toFloat()
+                    synchronized(micLevels) { micLevels.add(db) }
+                }
+            } catch (_: Exception) {
+            } finally {
+                runCatching { rec.stop() }
+                rec.release()
+            }
+        }, "svegliami-mic").start()
+    }
+
+    /** Punteggio del minuto dal microfono, rispetto al rumore di fondo degli ultimi minuti. */
+    private fun micMinuteScore(): Float {
+        val levels = synchronized(micLevels) { ArrayList(micLevels).also { micLevels.clear() } }
+        if (levels.isEmpty()) return 0f
+        recentFloors.addLast(SleepAnalyzer.percentile(levels, 0.1f))
+        while (recentFloors.size > FLOOR_MINUTES) recentFloors.removeFirst()
+        val baseline = SleepAnalyzer.percentile(recentFloors.toList(), 0.5f)
+        return SleepAnalyzer.micScore(levels, baseline)
     }
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -130,7 +216,7 @@ class SleepService : Service(), SensorEventListener {
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     private fun onMinute() {
-        val score = if (samples == 0) 0f else moving * 100f / samples
+        val score = if (micMode) micMinuteScore() else if (samples == 0) 0f else moving * 100f / samples
         scores += score
         samples = 0; moving = 0
         if (scores.size % 10 == 0) persist() // salvataggio periodico, nel caso il processo venga chiuso
@@ -156,7 +242,7 @@ class SleepService : Service(), SensorEventListener {
 
     private fun persist() {
         if (scores.size < 10) return // sessioni di pochi minuti: non le salva
-        SleepStore.upsert(this, SleepSession(startTime, System.currentTimeMillis(), scores.toList(), smartWakeAt))
+        SleepStore.upsert(this, SleepSession(startTime, System.currentTimeMillis(), scores.toList(), smartWakeAt, micMode))
     }
 
     private fun finish() {
@@ -164,6 +250,7 @@ class SleepService : Service(), SensorEventListener {
         instance = null
         handler.removeCallbacksAndMessages(null)
         sensorManager?.unregisterListener(this)
+        recording = false
         persist()
         wakeLock?.let { if (it.isHeld) it.release() }
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)

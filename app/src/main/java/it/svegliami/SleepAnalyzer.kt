@@ -22,6 +22,9 @@ object SleepAnalyzer {
     /** Punteggio minimo dell'ultimo minuto per considerare il sonno leggero (sveglia intelligente). */
     const val SMART_MIN_SCORE = 2f
 
+    /** dB sopra il rumore di fondo per considerare un istante "rumore di movimento". */
+    const val MIC_EVENT_DB = 8f
+
     private const val AWAKE_SCORE = 10f
     private const val LIGHT_SCORE = 0.8f
 
@@ -65,6 +68,22 @@ object SleepAnalyzer {
             awakeMin = st.size - deep - light,
             awakenings = awakenings,
         )
+    }
+
+    /** Percentile [q] (0–1) dei valori; 0 se la lista è vuota. */
+    fun percentile(values: List<Float>, q: Float): Float {
+        if (values.isEmpty()) return 0f
+        val sorted = values.sorted()
+        return sorted[((sorted.size - 1) * q).toInt().coerceIn(0, sorted.lastIndex)]
+    }
+
+    /**
+     * Punteggio di un minuto dal microfono: percentuale di istanti (livelli in dB) sopra
+     * il rumore di fondo della stanza. Stessa scala 0–100 dell'accelerometro.
+     */
+    fun micScore(levelsDb: List<Float>, baselineDb: Float): Float {
+        if (levelsDb.isEmpty()) return 0f
+        return levelsDb.count { it > baselineDb + MIC_EVENT_DB } * 100f / levelsDb.size
     }
 
     /** Nella finestra della sveglia intelligente: c'è abbastanza movimento per svegliare ora? */
