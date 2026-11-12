@@ -37,4 +37,4 @@ Nella schermata di una sveglia, «Controlla il meteo adesso» mostra cosa decide
 ## Scaricare l'APK sul telefono
 A ogni push su `main`, GitHub Actions compila l'app e pubblica l'APK con un link fisso:
 https://github.com/albertodalsasso/svegliami/releases/download/apk/svegliami.apk
-(il repository è privato: apri il link dal browser del telefono dopo aver fatto l'accesso a GitHub).
+Aprilo dal browser del telefono: non serve un account GitHub. Per aggiornare, installa il nuovo APK sopra quello vecchio: le impostazioni restano.
