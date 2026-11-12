@@ -65,3 +65,5 @@ https://github.com/albertodalsasso/svegliami/releases/download/apk/svegliami.aab
 - Il numero di versione (`versionCode`) è il numero progressivo della build di GitHub Actions, quindi cresce a ogni build.
 
 Privacy policy (italiano e inglese): https://albertodalsasso.github.io/svegliami/privacy.html
+
+Scheda dello store (testi, icona, immagini) e risposte ai moduli della Play Console: [`fastlane/PLAY_CONSOLE.md`](fastlane/PLAY_CONSOLE.md).

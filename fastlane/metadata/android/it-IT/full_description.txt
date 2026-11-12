@@ -1,0 +1,35 @@
+Se piove ci vuole più tempo per prepararsi e arrivare in orario. Svegliami controlla le previsioni prima della sveglia e, se è attesa pioggia, ti sveglia in anticipo.
+
+☔ SVEGLIA CHE SI ANTICIPA SE PIOVE
+• Imposti l'orario, per esempio 7:00, e di quanto anticipare: da 10 a 90 minuti.
+• Poco prima, l'app scarica le previsioni per la tua località. Se tra le 6:30 e le 7:00 è prevista pioggia, ti sveglia alle 6:30.
+• Scegli tu la soglia: pioggia prevista o probabilità di pioggia oltre una certa percentuale.
+• La sveglia normale resta sempre programmata: senza rete o senza previsioni suona comunque all'orario impostato.
+
+⏰ PIÙ SVEGLIE, OGNUNA CON LE SUE REGOLE
+• Nome, orario, giorni della settimana, anticipo, soglia di pioggia e suoneria diversi per ogni sveglia.
+• Sveglie che si ripetono o che suonano una volta sola.
+• Posticipa di 9 minuti, schermata a tutto schermo anche col telefono bloccato.
+
+🌙 SVEGLIA INTELLIGENTE E MONITORAGGIO DEL SONNO
+Senza smartwatch: la sera premi «Buonanotte» e scegli dove lasci il telefono.
+• Sul materasso: l'accelerometro sente quando ti muovi.
+• Sul comodino: il microfono misura solo il volume dei movimenti. L'audio non viene mai registrato né salvato.
+Nella finestra che scegli, fino a 45 minuti prima, la sveglia suona appena sei nel sonno leggero. Se dormi profondamente suona comunque all'orario previsto.
+
+📊 STORICO DEL SONNO
+• Grafico di ogni notte con le fasi stimate: profondo, leggero, sveglio.
+• Tempo a letto, sonno stimato, risvegli.
+• Rilevamento del russare, con il telefono sul comodino.
+Le fasi sono stimate dai movimenti: sono un'indicazione, non una misura medica.
+
+📍 LOCALITÀ
+Usa la posizione GPS o cerca la tua città. Con l'aggiornamento automatico la località si aggiorna ogni volta che apri l'app, comodo in viaggio.
+
+🔒 PRIVACY
+• Nessun account, nessuna pubblicità, nessuna statistica d'uso.
+• Sveglie e dati del sonno restano sul telefono.
+• Al servizio meteo Open-Meteo arrivano solo le coordinate o il nome della città.
+• Codice sorgente libero su GitHub.
+
+Previsioni meteo: Open-Meteo.com (CC BY 4.0).
