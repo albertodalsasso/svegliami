@@ -36,6 +36,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnGps: Button
     private lateinit var cbAutoLoc: CheckBox
     private lateinit var tvPerms: TextView
+    private lateinit var tvSleep: TextView
+    private lateinit var btnSleep: Button
     private lateinit var btnPerms: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +54,12 @@ class MainActivity : AppCompatActivity() {
         cbAutoLoc = findViewById(R.id.cbAutoLoc)
         tvPerms = findViewById(R.id.tvPerms)
         btnPerms = findViewById(R.id.btnPerms)
+        tvSleep = findViewById(R.id.tvSleep)
+        btnSleep = findViewById(R.id.btnSleep)
+        btnSleep.setOnClickListener { toggleSleep() }
+        findViewById<Button>(R.id.btnSleepHistory).setOnClickListener {
+            startActivity(Intent(this, SleepActivity::class.java))
+        }
 
         updatePlaceLabel()
         findViewById<Button>(R.id.btnAdd).setOnClickListener {
@@ -76,6 +84,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         renderAlarms()
+        renderSleep()
         refreshPermissions()
         // Con l'aggiornamento automatico attivo, ogni apertura dell'app rileva la posizione fresca.
         if (p.autoLocation && LocationHelper.hasForeground(this)) locateNow(manual = false)
@@ -126,7 +135,39 @@ class MainActivity : AppCompatActivity() {
                 sb.append("\nSe piove: alle ${Scheduler.fmtTime(occ - a.advanceMin * 60_000L)}")
             else -> sb.append("\nMeteo non controllato: imposta la località")
         }
+        if (a.smartWindowMin > 0) {
+            val target = if (st.earlyAt > 0) st.earlyAt else occ
+            sb.append("\n🌙 Intelligente: dalle ${Scheduler.fmtTime(target - a.smartWindowMin * 60_000L)} se dormi leggero")
+        }
         return sb.toString()
+    }
+
+    // ---------- sonno ----------
+
+    private fun renderSleep() {
+        if (SleepService.isRunning) {
+            tvSleep.text = "🌙 Monitoraggio attivo dalle ${Scheduler.fmtTime(SleepService.startedAt)}. " +
+                "Si ferma da solo quando suona la sveglia."
+            btnSleep.text = "Ferma il monitoraggio"
+        } else {
+            val smart = p.alarms.filter { it.enabled && it.smartWindowMin > 0 }
+            tvSleep.text = if (smart.isEmpty()) {
+                "Registra i movimenti della notte. Attiva la sveglia intelligente in una sveglia per farti svegliare nel sonno leggero."
+            } else {
+                "Prima di dormire premi «Buonanotte» e metti il telefono sul materasso, vicino al cuscino (meglio in carica)."
+            }
+            btnSleep.text = "🌙 Buonanotte: avvia il monitoraggio"
+        }
+    }
+
+    private fun toggleSleep() {
+        if (SleepService.isRunning) {
+            SleepService.stop()
+        } else {
+            SleepService.start(this)
+            Toast.makeText(this, "Metti il telefono sul materasso, vicino al cuscino. Buonanotte!", Toast.LENGTH_LONG).show()
+        }
+        btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
     }
 
     // ---------- località ----------

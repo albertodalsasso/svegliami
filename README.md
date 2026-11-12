@@ -9,6 +9,16 @@ Esempio: sveglia alle 07:00 con anticipo di 30 minuti.
 
 La sveglia normale è **sempre** programmata. Se meteo o rete non funzionano, suoni comunque all'orario normale.
 
+## Sveglia intelligente e monitoraggio del sonno
+Senza smartwatch: il telefono sul materasso registra i movimenti con l'accelerometro.
+1. In una sveglia scegli **🌙 Sveglia intelligente**: fino a 10/20/30/45 minuti prima.
+2. La sera premi **🌙 Buonanotte** nella schermata principale e lascia il telefono sul materasso, vicino al cuscino (meglio in carica).
+3. Nella finestra, al primo movimento (sonno leggero) la sveglia suona. Se non ti muovi, suona comunque all'orario previsto.
+   Se piove, la finestra si sposta prima insieme alla sveglia: per questo il controllo meteo avviene prima dell'inizio della finestra.
+4. Il monitoraggio si ferma da solo quando suona la sveglia. In **Storico del sonno** trovi il grafico di ogni notte con le fasi stimate (profondo, leggero, sveglio), il tempo a letto, il sonno stimato e i risvegli.
+
+Le fasi sono stimate dai movimenti (attigrafia): sono un'indicazione, non una misura clinica.
+
 ## Come aprirlo
 1. Apri questa cartella con **Android Studio** (Ladybug o più recente) e lascia completare la sincronizzazione Gradle.
 2. Collega il telefono con il debug USB attivo e premi ▶ Run.
@@ -32,6 +42,10 @@ Nella schermata di una sveglia, «Controlla il meteo adesso» mostra cosa decide
 | `WeatherCheck.kt` | Controllo meteo con nuovi tentativi ogni 5 minuti e cache come ripiego |
 | `AlarmService.kt` / `AlarmActivity.kt` | Suoneria, vibrazione e schermata a tutto schermo |
 | `LocationHelper.kt` | Posizione GPS/rete, nome della località (Geocoder), aggiornamento in background |
+| `SleepService.kt` | Monitoraggio notturno (accelerometro) e sveglia intelligente |
+| `SleepAnalyzer.kt` | Logica pura: punteggio di movimento → fasi, riepilogo, sonno leggero (con unit test) |
+| `SleepStore.kt` / `SleepActivity.kt` / `SleepGraphView.kt` | Storico delle notti e grafico |
+| `AlarmFire.kt` | Fa suonare una sveglia (programmata o intelligente) |
 | `Receivers.kt` | Receiver per la sveglia, per il controllo meteo e per il riavvio |
 
 ## Scaricare l'APK sul telefono

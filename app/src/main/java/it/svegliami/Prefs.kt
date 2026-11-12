@@ -18,6 +18,8 @@ data class Alarm(
     /** Vuoto = suoneria sveglia predefinita del telefono. */
     var ringtoneUri: String = "",
     var label: String = "",
+    /** Minuti della finestra della sveglia intelligente prima dell'orario (0 = disattivata). */
+    var smartWindowMin: Int = 0,
 ) {
     val timeText get() = "%02d:%02d".format(hour, minute)
     val title get() = label.ifBlank { "Sveglia delle $timeText" }
@@ -35,6 +37,7 @@ data class Alarm(
         .put("id", id).put("enabled", enabled).put("hour", hour).put("minute", minute)
         .put("days", days.sorted().joinToString(",")).put("advanceMin", advanceMin)
         .put("probThreshold", probThreshold).put("ringtoneUri", ringtoneUri).put("label", label)
+        .put("smartWindowMin", smartWindowMin)
 
     companion object {
         val DAY_NAMES = listOf("Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom")
@@ -51,6 +54,7 @@ data class Alarm(
             probThreshold = o.optInt("probThreshold", 50),
             ringtoneUri = o.optString("ringtoneUri", ""),
             label = o.optString("label", ""),
+            smartWindowMin = o.optInt("smartWindowMin", 0),
         )
     }
 }

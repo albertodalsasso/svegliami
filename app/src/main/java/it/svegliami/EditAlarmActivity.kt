@@ -26,6 +26,7 @@ class EditAlarmActivity : AppCompatActivity() {
         const val EXTRA_ID = "alarmId"
         private const val REQ_AUDIO = 5
         private val ADVANCE_OPTIONS = listOf(10, 15, 20, 30, 45, 60, 90)
+        private val SMART_OPTIONS = listOf(0, 10, 20, 30, 45)
     }
 
     private lateinit var p: Prefs
@@ -43,6 +44,7 @@ class EditAlarmActivity : AppCompatActivity() {
     private lateinit var dayBoxes: List<CheckBox>
     private lateinit var tvDaysHint: TextView
     private lateinit var spAdvance: Spinner
+    private lateinit var spSmart: Spinner
     private lateinit var sbProb: SeekBar
     private lateinit var tvProb: TextView
     private lateinit var btnRingtone: Button
@@ -79,6 +81,7 @@ class EditAlarmActivity : AppCompatActivity() {
         dayBoxes = listOf(R.id.d1, R.id.d2, R.id.d3, R.id.d4, R.id.d5, R.id.d6, R.id.d7).map { findViewById(it) }
         tvDaysHint = findViewById(R.id.tvDaysHint)
         spAdvance = findViewById(R.id.spAdvance)
+        spSmart = findViewById(R.id.spSmart)
         sbProb = findViewById(R.id.sbProb)
         tvProb = findViewById(R.id.tvProb)
         btnRingtone = findViewById(R.id.btnRingtone)
@@ -96,6 +99,11 @@ class EditAlarmActivity : AppCompatActivity() {
         updateDaysHint()
         spAdvance.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, ADVANCE_OPTIONS.map { "$it minuti" })
         spAdvance.setSelection(ADVANCE_OPTIONS.indexOf(alarm.advanceMin).let { if (it < 0) ADVANCE_OPTIONS.indexOf(30) else it })
+        spSmart.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_dropdown_item,
+            SMART_OPTIONS.map { if (it == 0) "Disattivata" else "Fino a $it minuti prima" },
+        )
+        spSmart.setSelection(SMART_OPTIONS.indexOf(alarm.smartWindowMin).coerceAtLeast(0))
         sbProb.max = 9
         sbProb.progress = (alarm.probThreshold / 10 - 1).coerceIn(0, 9)
         updateProbLabel()
@@ -137,6 +145,7 @@ class EditAlarmActivity : AppCompatActivity() {
         probThreshold = probValue(),
         ringtoneUri = ringtoneUri,
         label = etLabel.text.toString().trim(),
+        smartWindowMin = SMART_OPTIONS[spSmart.selectedItemPosition],
     )
 
     private fun save() {

@@ -74,6 +74,7 @@ class AlarmService : Service() {
     }
 
     private fun startAlarm(message: String) {
+        SleepService.stop()
         ensureChannel(this)
         stopSound()
 

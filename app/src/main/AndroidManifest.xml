@@ -20,6 +20,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
@@ -49,6 +51,17 @@
             android:exported="false"
             android:launchMode="singleInstance"
             android:taskAffinity="" />
+
+        <activity
+            android:name=".SleepActivity"
+            android:exported="false"
+            android:label="Storico del sonno"
+            android:parentActivityName=".MainActivity" />
+
+        <service
+            android:name=".SleepService"
+            android:exported="false"
+            android:foregroundServiceType="health" />
 
         <service
             android:name=".AlarmService"
