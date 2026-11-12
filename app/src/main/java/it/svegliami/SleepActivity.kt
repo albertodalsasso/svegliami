@@ -38,7 +38,7 @@ class SleepActivity : AppCompatActivity() {
         val sessions = SleepStore.load(this)
         if (sessions.isEmpty()) {
             tvNight.text = "Nessuna notte registrata"
-            tvSummary.text = "La sera premi «Buonanotte» nella schermata principale e lascia il telefono sul materasso."
+            tvSummary.text = "La sera premi «Buonanotte» nella schermata principale e lascia il telefono sul materasso o sul comodino, come scelto lì."
             graph.visibility = View.GONE
             return
         }

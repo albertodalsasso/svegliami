@@ -69,7 +69,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Funziona se la sera avvii «Buonanotte» e lasci il telefono sul materasso."
+            android:text="Funziona se la sera avvii «Buonanotte» nella sezione Sonno, con il telefono sul materasso o sul comodino."
             android:textSize="13sp" />
 
         <TextView

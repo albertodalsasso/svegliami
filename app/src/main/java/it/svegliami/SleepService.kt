@@ -31,6 +31,7 @@ import kotlin.math.sqrt
 
 /**
  * Monitoraggio notturno: registra i movimenti dall'accelerometro (telefono sul materasso)
+ * o dal volume del microfono (telefono sul comodino)
  * e, nella finestra della sveglia intelligente, fa suonare la sveglia al primo sonno leggero.
  */
 class SleepService : Service(), SensorEventListener {
