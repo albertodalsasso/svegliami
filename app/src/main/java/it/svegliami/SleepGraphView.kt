@@ -20,6 +20,7 @@ class SleepGraphView @JvmOverloads constructor(
         val COLOR_DEEP = Color.parseColor("#5C6BC0")
         val COLOR_LIGHT = Color.parseColor("#4FC3F7")
         val COLOR_AWAKE = Color.parseColor("#FFB74D")
+        val COLOR_SNORE = Color.parseColor("#EF5350")
     }
 
     var session: SleepSession? = null
@@ -44,6 +45,8 @@ class SleepGraphView @JvmOverloads constructor(
         if (stages.isEmpty()) return
 
         val labelH = 20 * density
+        val snoreH = if (s.snore.any { it }) 10 * density else 0f
+        val chartTop = snoreH
         val chartH = height - labelH
         val barW = width.toFloat() / stages.size
 
@@ -55,7 +58,15 @@ class SleepGraphView @JvmOverloads constructor(
             }
             barPaint.color = c
             val x = i * barW
-            canvas.drawRect(x, chartH * (1 - h), x + barW + 0.5f, chartH, barPaint)
+            canvas.drawRect(x, chartTop + (chartH - chartTop) * (1 - h), x + barW + 0.5f, chartH, barPaint)
+        }
+
+        // Minuti di russare: tacche rosse in cima
+        if (snoreH > 0) {
+            barPaint.color = COLOR_SNORE
+            s.snore.forEachIndexed { i, on ->
+                if (on) canvas.drawRect(i * barW, 0f, (i + 1) * barW + 0.5f, snoreH * 0.7f, barPaint)
+            }
         }
 
         // Ore intere sull'asse orizzontale

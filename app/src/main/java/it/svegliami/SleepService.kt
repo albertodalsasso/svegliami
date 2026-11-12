@@ -44,6 +44,8 @@ class SleepService : Service(), SensorEventListener {
         private const val SAMPLE_RATE = 16_000
         /** 100 ms di audio per lettura → 600 livelli al minuto. */
         private const val CHUNK = SAMPLE_RATE / 10
+        /** Filtro passa-basso a un polo a ~800 Hz: separa i suoni gravi (russare) da quelli acuti (fruscio). */
+        private val LOW_PASS_ALPHA = (1 - kotlin.math.exp(-2 * Math.PI * 800 / SAMPLE_RATE)).toFloat()
         /** Minuti su cui si stima il rumore di fondo della stanza. */
         private const val FLOOR_MINUTES = 10
 
@@ -80,7 +82,9 @@ class SleepService : Service(), SensorEventListener {
     // Modalità microfono: solo il livello (dB) di ogni blocco da 100 ms, mai l'audio.
     private var micMode = false
     @Volatile private var recording = false
-    private val micLevels = ArrayList<Float>()
+    private val micLevels = ArrayList<Float>()   // protetti dal lock di micLevels
+    private val micLowRatios = ArrayList<Float>()
+    private val snore = mutableListOf<Boolean>()
     private val recentFloors = ArrayDeque<Float>()
 
     private val tick = object : Runnable {
@@ -138,7 +142,8 @@ class SleepService : Service(), SensorEventListener {
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "svegliami:sleep")
             .apply { acquire(MAX_DURATION_MS) }
         recentFloors.clear()
-        synchronized(micLevels) { micLevels.clear() }
+        synchronized(micLevels) { micLevels.clear(); micLowRatios.clear() }
+        snore.clear()
         if (micMode) startMic() else startAccelerometer()
         handler.postDelayed(tick, 60_000)
         handler.postDelayed({ finish() }, MAX_DURATION_MS)
@@ -176,15 +181,23 @@ class SleepService : Service(), SensorEventListener {
                 return@Thread
             }
             val buf = ShortArray(CHUNK)
+            var low = 0f
             try {
                 rec.startRecording()
                 while (recording) {
                     val n = rec.read(buf, 0, buf.size)
                     if (n <= 0) continue
                     var sum = 0.0
-                    for (i in 0 until n) sum += buf[i].toDouble() * buf[i]
+                    var lowSum = 0.0
+                    for (i in 0 until n) {
+                        val x = buf[i].toFloat()
+                        low += LOW_PASS_ALPHA * (x - low)
+                        sum += x.toDouble() * x
+                        lowSum += low.toDouble() * low
+                    }
                     val db = (20 * log10(sqrt(sum / n) + 1.0)).toFloat()
-                    synchronized(micLevels) { micLevels.add(db) }
+                    val ratio = if (sum > 0) (lowSum / sum).toFloat().coerceIn(0f, 1f) else 0f
+                    synchronized(micLevels) { micLevels.add(db); micLowRatios.add(ratio) }
                 }
             } catch (_: Exception) {
             } finally {
@@ -195,13 +208,15 @@ class SleepService : Service(), SensorEventListener {
     }
 
     /** Punteggio del minuto dal microfono, rispetto al rumore di fondo degli ultimi minuti. */
-    private fun micMinuteScore(): Float {
-        val levels = synchronized(micLevels) { ArrayList(micLevels).also { micLevels.clear() } }
-        if (levels.isEmpty()) return 0f
+    private fun micMinute(): MicMinute {
+        val (levels, ratios) = synchronized(micLevels) {
+            (ArrayList(micLevels) to ArrayList(micLowRatios)).also { micLevels.clear(); micLowRatios.clear() }
+        }
+        if (levels.isEmpty()) return MicMinute(0f, false)
         recentFloors.addLast(SleepAnalyzer.percentile(levels, 0.1f))
         while (recentFloors.size > FLOOR_MINUTES) recentFloors.removeFirst()
         val baseline = SleepAnalyzer.percentile(recentFloors.toList(), 0.5f)
-        return SleepAnalyzer.micScore(levels, baseline)
+        return SleepAnalyzer.analyzeMicMinute(levels, ratios, baseline)
     }
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -217,7 +232,15 @@ class SleepService : Service(), SensorEventListener {
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     private fun onMinute() {
-        val score = if (micMode) micMinuteScore() else if (samples == 0) 0f else moving * 100f / samples
+        val score: Float
+        if (micMode) {
+            val m = micMinute()
+            score = m.score
+            snore += m.snoring
+        } else {
+            score = if (samples == 0) 0f else moving * 100f / samples
+            snore += false
+        }
         scores += score
         samples = 0; moving = 0
         if (scores.size % 10 == 0) persist() // salvataggio periodico, nel caso il processo venga chiuso
@@ -243,7 +266,7 @@ class SleepService : Service(), SensorEventListener {
 
     private fun persist() {
         if (scores.size < 10) return // sessioni di pochi minuti: non le salva
-        SleepStore.upsert(this, SleepSession(startTime, System.currentTimeMillis(), scores.toList(), smartWakeAt, micMode))
+        SleepStore.upsert(this, SleepSession(startTime, System.currentTimeMillis(), scores.toList(), smartWakeAt, micMode, snore.toList()))
     }
 
     private fun finish() {

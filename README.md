@@ -19,6 +19,8 @@ Senza smartwatch, in due modi a scelta:
    Se piove, la finestra si sposta prima insieme alla sveglia: per questo il controllo meteo avviene prima dell'inizio della finestra.
 4. Il monitoraggio si ferma da solo quando suona la sveglia. In **Storico del sonno** trovi il grafico di ogni notte con le fasi stimate (profondo, leggero, sveglio), il tempo a letto, il sonno stimato e i risvegli.
 
+**Russare** (solo con il telefono sul comodino): un minuto conta come russato se ci sono almeno 4 suoni **gravi** (energia sotto ~800 Hz), lunghi 0,3–2,5 s, ripetuti a intervalli regolari da 2–8 s come il respiro. Il fruscio delle coperte è acuto e irregolare, quindi non conta. I minuti di russare compaiono come tacche rosse nel grafico e non vengono contati come movimento. Anche qui l'audio viene solo analizzato al volo, mai salvato.
+
 Le fasi sono stimate dai movimenti (attigrafia): sono un'indicazione, non una misura clinica.
 
 ## Come aprirlo

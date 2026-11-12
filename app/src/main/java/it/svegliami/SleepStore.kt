@@ -14,7 +14,11 @@ data class SleepSession(
     val smartWakeAt: Long = 0,
     /** Registrata col microfono (telefono sul comodino) invece che con l'accelerometro. */
     val mic: Boolean = false,
-)
+    /** Per ogni minuto: russare rilevato (solo in modalità microfono). */
+    val snore: List<Boolean> = emptyList(),
+) {
+    val snoreMinutes get() = snore.count { it }
+}
 
 /** Storico delle notti, in un file JSON nella memoria privata dell'app. */
 object SleepStore {
@@ -35,6 +39,7 @@ object SleepStore {
                 scores = (0 until s.length()).map { s.getDouble(it).toFloat() },
                 smartWakeAt = o.optLong("smartWakeAt", 0),
                 mic = o.optBoolean("mic", false),
+                snore = o.optString("snore", "").map { it == '1' },
             )
         }.sortedByDescending { it.start }
     }.getOrDefault(emptyList())
@@ -46,6 +51,7 @@ object SleepStore {
             .sortedByDescending { it.start }.take(MAX_SESSIONS)
         val arr = JSONArray(list.map { s ->
             JSONObject().put("start", s.start).put("end", s.end).put("smartWakeAt", s.smartWakeAt).put("mic", s.mic)
+                .put("snore", s.snore.joinToString("") { if (it) "1" else "0" })
                 .put("scores", JSONArray(s.scores.map { Math.round(it * 10) / 10.0 }))
         })
         file(ctx).writeText(arr.toString())

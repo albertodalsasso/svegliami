@@ -48,7 +48,8 @@ class SleepActivity : AppCompatActivity() {
         for (s in sessions) {
             val sum = SleepAnalyzer.summary(s.scores)
             nightList.addView(TextView(this).apply {
-                text = "${night(s)} · ${Scheduler.fmtTime(s.start)}–${Scheduler.fmtTime(s.end)} · sonno ${hm(sum.asleepMin)}"
+                text = "${night(s)} · ${Scheduler.fmtTime(s.start)}–${Scheduler.fmtTime(s.end)} · sonno ${hm(sum.asleepMin)}" +
+                    if (s.snoreMinutes > 0) " · russato ${hm(s.snoreMinutes)}" else ""
                 textSize = 15f
                 setPadding(0, 24, 0, 24)
                 setOnClickListener { show(s) }
@@ -71,7 +72,13 @@ class SleepActivity : AppCompatActivity() {
             append("Sonno stimato: ${hm(sum.asleepMin)}\n")
             append("Profondo ${hm(sum.deepMin)} · Leggero ${hm(sum.lightMin)} · Sveglio ${hm(sum.awakeMin)}\n")
             append("Risvegli: ${sum.awakenings}\n")
-            append(if (s.mic) "Telefono sul comodino (microfono)" else "Telefono sul materasso (accelerometro)")
+            if (s.mic) {
+                val pct = if (sum.asleepMin > 0) s.snoreMinutes * 100 / sum.asleepMin else 0
+                append("Russare: ${if (s.snoreMinutes == 0) "non rilevato" else "${hm(s.snoreMinutes)} ($pct% del sonno, tacche rosse)"}\n")
+                append("Telefono sul comodino (microfono)")
+            } else {
+                append("Telefono sul materasso (accelerometro): russare non rilevabile")
+            }
             if (s.smartWakeAt > 0) append("\n🌙 Sveglia intelligente alle ${Scheduler.fmtTime(s.smartWakeAt)} (linea rosa)")
         }
     }
@@ -86,6 +93,7 @@ class SleepActivity : AppCompatActivity() {
         item(SleepGraphView.COLOR_DEEP, "Profondo")
         item(SleepGraphView.COLOR_LIGHT, "Leggero")
         item(SleepGraphView.COLOR_AWAKE, "Sveglio")
+        item(SleepGraphView.COLOR_SNORE, "Russare")
     }
 
     override fun onSupportNavigateUp(): Boolean {

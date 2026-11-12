@@ -59,3 +59,46 @@ class MicScoreTest {
         assertEquals(0f, SleepAnalyzer.micScore(levels, SleepAnalyzer.percentile(levels, 0.1f)), 0.001f)
     }
 }
+
+class SnoreTest {
+    private val base = 30f
+
+    /** Un minuto (600 blocchi) con suoni da [len] blocchi ogni [every] blocchi. */
+    private fun minute(every: Int, len: Int, db: Float, ratio: Float, jitter: (Int) -> Int = { 0 }): Pair<List<Float>, List<Float>> {
+        val levels = MutableList(600) { base }
+        val ratios = MutableList(600) { 0.2f }
+        var start = 5
+        var k = 0
+        while (start + len < 600) {
+            for (i in start until start + len) { levels[i] = db; ratios[i] = ratio }
+            start += every + jitter(k++)
+        }
+        return levels to ratios
+    }
+
+    @Test fun `suoni gravi a ritmo di respiro sono russare e non movimento`() {
+        val (l, r) = minute(every = 40, len = 10, db = 45f, ratio = 0.8f)
+        val m = SleepAnalyzer.analyzeMicMinute(l, r, base)
+        assertTrue(m.snoring)
+        assertEquals(0f, m.score, 0.001f)
+    }
+
+    @Test fun `fruscio acuto ritmico non e russare`() {
+        val (l, r) = minute(every = 40, len = 10, db = 45f, ratio = 0.2f)
+        val m = SleepAnalyzer.analyzeMicMinute(l, r, base)
+        assertFalse(m.snoring)
+        assertTrue(m.score > 0f)
+    }
+
+    @Test fun `suoni gravi irregolari non sono russare`() {
+        val gaps = listOf(5, 60, -15, 35, -10, 50, 0, 40)
+        val (l, r) = minute(every = 30, len = 8, db = 45f, ratio = 0.8f) { gaps[it % gaps.size] }
+        assertFalse(SleepAnalyzer.analyzeMicMinute(l, r, base).snoring)
+    }
+
+    @Test fun `silenzio niente russare`() {
+        val m = SleepAnalyzer.analyzeMicMinute(List(600) { base }, List(600) { 0.5f }, base)
+        assertFalse(m.snoring)
+        assertEquals(0f, m.score, 0.001f)
+    }
+}
