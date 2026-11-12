@@ -1,0 +1,7 @@
+<resources>
+    <!-- Android 15 forza il layout "edge-to-edge" (contenuto sotto barra di stato e
+         barra del titolo) alle app con targetSdk 35: qui si mantiene il layout classico. -->
+    <style name="Theme.Svegliami" parent="Theme.Material3.DayNight">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+</resources>
