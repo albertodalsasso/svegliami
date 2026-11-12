@@ -37,12 +37,18 @@ jobs:
       - name: Test e build
         env:
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-        run: gradle testDebugUnitTest assembleDebug
+        run: gradle testDebugUnitTest assembleDebug bundleRelease
 
       - uses: actions/upload-artifact@v4
         with:
           name: svegliami-apk
           path: app/build/outputs/apk/debug/*.apk
+
+      # Pacchetto per Google Play (AAB firmato con la chiave di caricamento).
+      - uses: actions/upload-artifact@v4
+        with:
+          name: svegliami-aab
+          path: app/build/outputs/bundle/release/*.aab
 
       # Su main: pubblica l'APK come release "apk", con link diretto e fisso:
       # https://github.com/<utente>/<repo>/releases/download/apk/svegliami.apk
@@ -53,8 +59,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk svegliami.apk
+          cp app/build/outputs/bundle/release/app-release.aab svegliami.aab
           gh release delete apk --cleanup-tag --yes || true
-          gh release create apk svegliami.apk \
+          gh release create apk svegliami.apk svegliami.aab \
             --title "Svegliami (ultima build)" \
-            --notes "Build automatica del commit ${GITHUB_SHA::7}" \
+            --notes "Build automatica n. $GITHUB_RUN_NUMBER del commit ${GITHUB_SHA::7}. svegliami.apk si installa sul telefono, svegliami.aab si carica su Google Play." \
             --target "$GITHUB_SHA"

@@ -56,3 +56,11 @@ Nella schermata di una sveglia, «Controlla il meteo adesso» mostra cosa decide
 A ogni push su `main`, GitHub Actions compila l'app e pubblica l'APK con un link fisso:
 https://github.com/albertodalsasso/svegliami/releases/download/apk/svegliami.apk
 Aprilo dal browser del telefono: non serve un account GitHub. Per aggiornare, installa il nuovo APK sopra quello vecchio: le impostazioni restano.
+
+## Google Play
+A ogni push su `main` la build produce anche **`svegliami.aab`**, il pacchetto da caricare su Google Play Console. Lo trovi nella stessa release dell'APK:
+https://github.com/albertodalsasso/svegliami/releases/download/apk/svegliami.aab
+- È firmato con la stessa chiave dell'APK, che su Play fa da **chiave di caricamento**. Al primo caricamento accetta **Play App Signing**.
+- Il numero di versione (`versionCode`) è il numero progressivo della build di GitHub Actions, quindi cresce a ogni build.
+
+Privacy policy (italiano e inglese): https://albertodalsasso.github.io/svegliami/privacy.html

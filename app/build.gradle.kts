@@ -11,8 +11,11 @@ android {
         applicationId = "it.svegliami"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // In CI il numero di versione è il numero progressivo della build di GitHub Actions:
+        // Google Play rifiuta un aggiornamento con versionCode uguale o più basso del precedente.
+        val build = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+        versionCode = build
+        versionName = "1.0.$build"
     }
 
     // Chiave di firma fissa (da variabili d'ambiente, in CI dai segreti del repository).
@@ -37,6 +40,9 @@ android {
         }
         release {
             isMinifyEnabled = false
+            // Per Google Play la stessa chiave fa da "chiave di caricamento":
+            // la firma finale la applica Google (Play App Signing).
+            signingConfigs.findByName("fixed")?.let { signingConfig = it }
         }
     }
     compileOptions {
