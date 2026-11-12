@@ -29,7 +29,7 @@ class SleepGraphView @JvmOverloads constructor(
     private val barPaint = Paint()
     private val axisPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.GRAY
-        textSize = 12 * resources.displayMetrics.scaledDensity
+        textSize = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, 12f, resources.displayMetrics)
         strokeWidth = density
     }
     private val markPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
