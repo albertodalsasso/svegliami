@@ -65,6 +65,9 @@ A ogni push su `main`, GitHub Actions compila l'app e pubblica l'APK con un link
 https://github.com/albertodalsasso/svegliami/releases/download/apk/svegliami.apk
 Aprilo dal browser del telefono: non serve un account GitHub. Per aggiornare, installa il nuovo APK sopra quello vecchio: le impostazioni restano.
 
+La build del branch `Svegliami_2.0` viene pubblicata separatamente qui:
+https://github.com/albertodalsasso/svegliami/releases/download/svegliami-2.0/svegliami-2.0.apk
+
 ## Google Play
 A ogni push su `main` la build produce anche **`svegliami.aab`**, il pacchetto da caricare su Google Play Console. Lo trovi nella stessa release dell'APK:
 https://github.com/albertodalsasso/svegliami/releases/download/apk/svegliami.aab
