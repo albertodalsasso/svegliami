@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "it.svegliami"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "it.svegliami"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         // In CI il numero di versione è il numero progressivo della build di GitHub Actions:
         // Google Play rifiuta un aggiornamento con versionCode uguale o più basso del precedente.
         val build = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1

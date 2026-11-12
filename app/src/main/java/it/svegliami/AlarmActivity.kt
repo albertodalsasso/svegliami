@@ -37,6 +37,7 @@ class AlarmActivity : AppCompatActivity() {
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContentView(R.layout.activity_alarm)
+        SystemBars.apply(this)
 
         findViewById<TextView>(R.id.alarmTime).text = Scheduler.fmtTime(System.currentTimeMillis())
         val message = intent.getStringExtra(AlarmService.EXTRA_MESSAGE) ?: ""

@@ -252,7 +252,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Aggiorna automaticamente (utile in viaggio)"
+                        android:text="Aggiorna a ogni apertura dell'app (utile in viaggio)"
                         android:textColor="@color/on_surface_variant" />
 
                     <LinearLayout

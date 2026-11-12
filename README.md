@@ -28,7 +28,7 @@ Le fasi sono stimate dai movimenti (attigrafia): sono un'indicazione, non una mi
 2. Collega il telefono con il debug USB attivo e premi ▶ Run.
 3. Nella schermata principale imposta la **località** (vale per tutte le sveglie):
    - **📍 Usa la mia posizione (GPS)**: rileva la posizione una volta. Aspetta il GPS fino a 20 s, poi usa la posizione da rete.
-   - **Aggiorna la posizione automaticamente**: prima di ogni controllo meteo usa l'ultima posizione nota del telefono. Richiede il permesso «Consenti sempre». La posizione viene aggiornata anche a ogni apertura dell'app.
+   - **Aggiorna a ogni apertura dell'app**: rileva di nuovo la posizione ogni volta che apri l'app, comodo in viaggio. Il controllo meteo notturno usa l'ultima posizione rilevata: l'app non chiede la posizione in background.
    - oppure cerca una città per nome. Scegliendola, l'aggiornamento automatico si disattiva.
    Poi premi **+ Nuova sveglia**: nome, orario, giorni, anticipo, soglia e suoneria. **Nessun giorno selezionato = suona una volta sola** e poi si disattiva. Tocca una sveglia per modificarla o eliminarla, l'interruttore la attiva o la disattiva.
 4. Concedi i permessi segnalati in alto, compresa l'esclusione dall'ottimizzazione della batteria: serve perché il controllo notturno abbia la rete.
@@ -45,8 +45,9 @@ Nella schermata di una sveglia, «Controlla il meteo adesso» mostra cosa decide
 | `Scheduler.kt` | Programmazione di AlarmManager (normale, anticipata, controllo, snooze) |
 | `WeatherCheck.kt` | Controllo meteo con nuovi tentativi ogni 5 minuti e cache come ripiego |
 | `AlarmService.kt` / `AlarmActivity.kt` | Suoneria, vibrazione e schermata a tutto schermo |
-| `LocationHelper.kt` | Posizione GPS/rete, nome della località (Geocoder), aggiornamento in background |
-| `SleepService.kt` | Monitoraggio notturno (accelerometro) e sveglia intelligente |
+| `LocationHelper.kt` | Posizione GPS/rete, nome della località (Geocoder) |
+| `SleepService.kt` | Monitoraggio notturno (accelerometro o microfono) e sveglia intelligente |
+| `SystemBars.kt` | Layout a tutto schermo (Android 16): margini per barre di sistema e tastiera |
 | `SleepAnalyzer.kt` | Logica pura: punteggio di movimento → fasi, riepilogo, sonno leggero (con unit test) |
 | `SleepStore.kt` / `SleepActivity.kt` / `SleepGraphView.kt` | Storico delle notti e grafico |
 | `AlarmFire.kt` | Fa suonare una sveglia (programmata o intelligente) |

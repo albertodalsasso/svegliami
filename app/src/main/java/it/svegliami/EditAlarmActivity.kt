@@ -68,6 +68,7 @@ class EditAlarmActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_alarm)
+        SystemBars.apply(this)
         p = Prefs(this)
 
         val existing = p.alarm(intent.getIntExtra(EXTRA_ID, -1))

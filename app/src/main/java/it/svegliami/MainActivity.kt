@@ -67,6 +67,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        SystemBars.apply(this)
         p = Prefs(this)
         AlarmService.ensureChannel(this)
 
@@ -391,24 +392,8 @@ class MainActivity : AppCompatActivity() {
     private fun ensureAutoLocationPermissions() {
         when {
             !LocationHelper.hasForeground(this) -> requestPermissions(FOREGROUND_LOC, REQ_LOC_AUTO)
-            !LocationHelper.hasBackground(this) -> askBackgroundLocation()
             else -> locateNow(manual = false)
         }
-    }
-
-    private fun askBackgroundLocation() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
-        AlertDialog.Builder(this)
-            .setTitle("Posizione anche in background")
-            .setMessage(
-                "Per aggiornare la località prima del controllo meteo notturno, scegli " +
-                    "«Consenti sempre» nella schermata dei permessi di posizione.",
-            )
-            .setPositiveButton("Continua") { _, _ ->
-                requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), REQ_LOC_BG)
-            }
-            .setNegativeButton("Annulla", null)
-            .show()
     }
 
     // ---------- permessi ----------
@@ -437,9 +422,6 @@ class MainActivity : AppCompatActivity() {
                 requestPermissions(arrayOf(Ringtones.storagePermission()), REQ_AUDIO)
             }
         }
-        if (p.autoLocation && !LocationHelper.hasBackground(this)) {
-            list += Issue("Posizione in background non consentita (aggiornamento automatico)") { askBackgroundLocation() }
-        }
         if (!getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)) {
             list += Issue("Ottimizzazione batteria attiva: il controllo meteo notturno potrebbe non avere rete") {
                 @Suppress("BatteryLife")
@@ -465,7 +447,6 @@ class MainActivity : AppCompatActivity() {
             REQ_LOC_AUTO ->
                 if (ok) ensureAutoLocationPermissions()
                 else swAutoLoc.isChecked = false
-            REQ_LOC_BG -> if (ok) locateNow(manual = false)
             REQ_MIC ->
                 if (ok) startSleep()
                 else Toast.makeText(this, "Senza microfono usa la modalità «Materasso»", Toast.LENGTH_LONG).show()
@@ -482,7 +463,6 @@ class MainActivity : AppCompatActivity() {
         private const val REQ_NOTIF = 1
         private const val REQ_LOC_GPS = 2
         private const val REQ_LOC_AUTO = 3
-        private const val REQ_LOC_BG = 4
         private const val REQ_AUDIO = 5
         private const val REQ_MIC = 6
         private val FOREGROUND_LOC = arrayOf(

@@ -27,9 +27,12 @@ object LocationHelper {
 
     fun hasFine(ctx: Context) = granted(ctx, Manifest.permission.ACCESS_FINE_LOCATION)
     fun hasForeground(ctx: Context) = hasFine(ctx) || granted(ctx, Manifest.permission.ACCESS_COARSE_LOCATION)
-    fun hasBackground(ctx: Context) =
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) hasForeground(ctx)
-        else granted(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+    /**
+     * L'app non chiede la posizione in background (Google Play la concede di rado): su Android 10+
+     * la posizione si aggiorna solo ad app aperta. Prima di Android 10 il permesso normale basta.
+     */
+    fun canLocateInBackground(ctx: Context) =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && hasForeground(ctx)
 
     private fun lm(ctx: Context) = ctx.getSystemService(LocationManager::class.java)
 
@@ -125,9 +128,9 @@ object LocationHelper {
         p.locationTime = loc.time
     }
 
-    /** Aggiornamento automatico in background: usa l'ultima posizione nota, se più recente. */
+    /** Aggiornamento automatico prima del controllo meteo (solo dove consentito, vedi [canLocateInBackground]). */
     fun refreshInBackground(ctx: Context, p: Prefs) {
-        if (!p.autoLocation || !hasBackground(ctx)) return
+        if (!p.autoLocation || !canLocateInBackground(ctx)) return
         val loc = lastKnown(ctx) ?: return
         if (loc.time > p.locationTime) apply(ctx, p, loc)
     }

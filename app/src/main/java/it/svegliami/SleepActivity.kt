@@ -32,6 +32,7 @@ class SleepActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sleep)
+        SystemBars.apply(this)
         findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { finish() }
         graph = findViewById(R.id.graph)
         tvNight = findViewById(R.id.tvNight)
