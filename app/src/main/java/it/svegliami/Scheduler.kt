@@ -16,6 +16,9 @@ object Scheduler {
     const val KIND_EARLY = 2
     const val KIND_CHECK = 3
     const val KIND_SNOOZE = 4
+    private val ALL_KINDS = listOf(KIND_NORMAL, KIND_EARLY, KIND_CHECK, KIND_SNOOZE)
+
+    const val EXTRA_ID = "alarmId"
     const val EXTRA_KIND = "kind"
     const val EXTRA_OCC = "occurrence"
 
@@ -37,17 +40,23 @@ object Scheduler {
     private fun receiverFor(kind: Int) =
         if (kind == KIND_CHECK) CheckWeatherReceiver::class.java else AlarmReceiver::class.java
 
-    private fun pi(ctx: Context, kind: Int, occ: Long): PendingIntent {
-        val i = Intent(ctx, receiverFor(kind)).putExtra(EXTRA_KIND, kind).putExtra(EXTRA_OCC, occ)
-        return PendingIntent.getBroadcast(ctx, kind, i, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    /** Request code univoco per sveglia e tipo (gli id partono da 1, quindi i codici da 11). */
+    private fun code(id: Int, kind: Int) = id * 10 + kind
+
+    private fun pi(ctx: Context, id: Int, kind: Int, occ: Long): PendingIntent {
+        val i = Intent(ctx, receiverFor(kind))
+            .putExtra(EXTRA_ID, id).putExtra(EXTRA_KIND, kind).putExtra(EXTRA_OCC, occ)
+        return PendingIntent.getBroadcast(ctx, code(id, kind), i, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
-    private fun cancel(ctx: Context, kind: Int) {
+    private fun cancelCode(ctx: Context, requestCode: Int, kind: Int) {
         PendingIntent.getBroadcast(
-            ctx, kind, Intent(ctx, receiverFor(kind)),
+            ctx, requestCode, Intent(ctx, receiverFor(kind)),
             PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
         )?.let { am(ctx).cancel(it); it.cancel() }
     }
+
+    private fun cancel(ctx: Context, id: Int, kind: Int) = cancelCode(ctx, code(id, kind), kind)
 
     private fun showPi(ctx: Context) = PendingIntent.getActivity(
         ctx, 0, Intent(ctx, MainActivity::class.java),
@@ -65,51 +74,61 @@ object Scheduler {
         else am(ctx).setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, op)
     }
 
-    fun nextOccurrence(p: Prefs, now: Long): Long? {
-        val days = p.days
-        if (days.isEmpty()) return null
+    /** Prossimo orario della sveglia dopo [now] e dopo l'ultima occorrenza già suonata. */
+    fun nextOccurrence(a: Alarm, handled: Long, now: Long): Long? {
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now(zone)
         for (i in 0..7) {
             val d = today.plusDays(i.toLong())
-            if (d.dayOfWeek.value !in days) continue
-            val t = d.atTime(p.hour, p.minute).atZone(zone).toInstant().toEpochMilli()
-            if (t > now && t > p.handledOccurrence) return t
+            if (a.days.isNotEmpty() && d.dayOfWeek.value !in a.days) continue
+            val t = d.atTime(a.hour, a.minute).atZone(zone).toInstant().toEpochMilli()
+            if (t > now && t > handled) return t
         }
         return null
     }
 
-    /** Ricalcola tutto: sveglia normale della prossima occorrenza + controllo meteo. */
-    fun reschedule(ctx: Context) {
+    /** Ricalcola una sveglia: sveglia normale della prossima occorrenza + controllo meteo. */
+    fun reschedule(ctx: Context, id: Int) {
         val p = Prefs(ctx)
-        cancel(ctx, KIND_CHECK)
-        cancel(ctx, KIND_EARLY)
-        cancel(ctx, KIND_NORMAL)
-        p.earlyAt = 0
-        p.currentOccurrence = 0
-        if (!p.enabled) return
+        val st = p.state(id)
+        cancel(ctx, id, KIND_CHECK)
+        cancel(ctx, id, KIND_EARLY)
+        cancel(ctx, id, KIND_NORMAL)
+        st.earlyAt = 0
+        st.currentOccurrence = 0
+        val a = p.alarm(id) ?: return
+        if (!a.enabled) return
 
         val now = System.currentTimeMillis()
-        val occ = nextOccurrence(p, now) ?: return
-        p.currentOccurrence = occ
-        setClock(ctx, occ, pi(ctx, KIND_NORMAL, occ))
+        val occ = nextOccurrence(a, st.handledOccurrence, now) ?: return
+        st.currentOccurrence = occ
+        setClock(ctx, occ, pi(ctx, id, KIND_NORMAL, occ))
 
         if (!p.hasLocation && !p.autoLocation) return
-        val early = occ - p.advanceMin * 60_000L
+        val early = occ - a.advanceMin * 60_000L
         val check = early - CHECK_LEAD_MIN * 60_000L
         when {
-            check > now -> setExact(ctx, check, pi(ctx, KIND_CHECK, occ))
-            early > now -> setExact(ctx, now + 2_000, pi(ctx, KIND_CHECK, occ)) // siamo già nella finestra: controlla subito
+            check > now -> setExact(ctx, check, pi(ctx, id, KIND_CHECK, occ))
+            early > now -> setExact(ctx, now + 2_000, pi(ctx, id, KIND_CHECK, occ)) // già nella finestra: controlla subito
         }
     }
 
-    fun scheduleEarly(ctx: Context, occ: Long, early: Long) {
-        Prefs(ctx).earlyAt = early
-        setClock(ctx, early, pi(ctx, KIND_EARLY, occ))
+    fun rescheduleAll(ctx: Context) {
+        // Allarmi della prima versione (una sola sveglia, request code 1–4).
+        ALL_KINDS.forEach { cancelCode(ctx, it, it) }
+        Prefs(ctx).alarms.forEach { reschedule(ctx, it.id) }
     }
 
-    fun scheduleCheckRetry(ctx: Context, at: Long, occ: Long) = setExact(ctx, at, pi(ctx, KIND_CHECK, occ))
+    /** Cancella tutto ciò che riguarda una sveglia (prima di eliminarla). */
+    fun cancelAll(ctx: Context, id: Int) = ALL_KINDS.forEach { cancel(ctx, id, it) }
 
-    fun scheduleSnooze(ctx: Context) =
-        setClock(ctx, System.currentTimeMillis() + SNOOZE_MIN * 60_000L, pi(ctx, KIND_SNOOZE, 0))
+    fun scheduleEarly(ctx: Context, id: Int, occ: Long, early: Long) {
+        Prefs(ctx).state(id).earlyAt = early
+        setClock(ctx, early, pi(ctx, id, KIND_EARLY, occ))
+    }
+
+    fun scheduleCheckRetry(ctx: Context, id: Int, at: Long, occ: Long) = setExact(ctx, at, pi(ctx, id, KIND_CHECK, occ))
+
+    fun scheduleSnooze(ctx: Context, id: Int) =
+        setClock(ctx, System.currentTimeMillis() + SNOOZE_MIN * 60_000L, pi(ctx, id, KIND_SNOOZE, 0))
 }

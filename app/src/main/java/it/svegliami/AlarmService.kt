@@ -10,7 +10,6 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.media.RingtoneManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -30,12 +29,14 @@ class AlarmService : Service() {
         const val ACTION_SNOOZE = "it.svegliami.SNOOZE"
         const val ACTION_STOPPED = "it.svegliami.ALARM_STOPPED"
         const val EXTRA_MESSAGE = "message"
+        const val EXTRA_ALARM_ID = "alarmId"
         const val CHANNEL_ID = "alarm"
         private const val NOTIF_ID = 42
         private const val AUTO_STOP_MS = 10 * 60_000L
 
-        fun start(ctx: Context, message: String) {
-            val i = Intent(ctx, AlarmService::class.java).setAction(ACTION_START).putExtra(EXTRA_MESSAGE, message)
+        fun start(ctx: Context, alarmId: Int, message: String) {
+            val i = Intent(ctx, AlarmService::class.java).setAction(ACTION_START)
+                .putExtra(EXTRA_ALARM_ID, alarmId).putExtra(EXTRA_MESSAGE, message)
             ContextCompat.startForegroundService(ctx, i)
         }
 
@@ -50,6 +51,8 @@ class AlarmService : Service() {
     }
 
     private var player: MediaPlayer? = null
+    /** Sveglia che sta suonando (serve per posticipare quella giusta). */
+    private var alarmId = -1
     private var vibrator: Vibrator? = null
     private val handler = Handler(Looper.getMainLooper())
 
@@ -57,9 +60,12 @@ class AlarmService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startAlarm(intent.getStringExtra(EXTRA_MESSAGE) ?: "Sveglia")
+            ACTION_START -> {
+                alarmId = intent.getIntExtra(EXTRA_ALARM_ID, -1)
+                startAlarm(intent.getStringExtra(EXTRA_MESSAGE) ?: "Sveglia")
+            }
             ACTION_SNOOZE -> {
-                Scheduler.scheduleSnooze(this)
+                if (alarmId >= 0) Scheduler.scheduleSnooze(this, alarmId)
                 stopAlarm()
             }
             else -> stopAlarm()
@@ -106,7 +112,7 @@ class AlarmService : Service() {
     }
 
     private fun playSound() {
-        val chosen = Prefs(this).ringtoneUri.takeIf { it.isNotEmpty() }?.let { android.net.Uri.parse(it) }
+        val chosen = Prefs(this).alarm(alarmId)?.ringtoneUri?.takeIf { it.isNotEmpty() }?.let { android.net.Uri.parse(it) }
         // Se la suoneria scelta non è più leggibile (file cancellato, permesso mancante) usa quella predefinita.
         player = chosen?.let { tryPlay(it) } ?: tryPlay(Ringtones.defaultAlarmUri(this))
     }

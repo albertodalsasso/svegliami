@@ -3,7 +3,10 @@ package it.svegliami
 import android.content.Context
 
 object WeatherCheck {
+    /** Oltre quest'età la cache non si usa nemmeno come ripiego. */
     private const val CACHE_MAX_AGE_MS = 12 * 3600_000L
+    /** Più sveglie vicine non riscaricano le previsioni se sono così recenti. */
+    private const val CACHE_REUSE_MS = 15 * 60_000L
 
     private fun cacheKey(p: Prefs) = "${p.lat},${p.lon}"
 
@@ -17,52 +20,55 @@ object WeatherCheck {
         return forecast
     }
 
-    fun cached(p: Prefs): Forecast? {
-        val fresh = System.currentTimeMillis() - p.cacheTime < CACHE_MAX_AGE_MS
+    fun cached(p: Prefs, maxAgeMs: Long = CACHE_MAX_AGE_MS): Forecast? {
+        val fresh = System.currentTimeMillis() - p.cacheTime < maxAgeMs
         if (!fresh || p.cacheKey != cacheKey(p) || p.cacheJson.isEmpty()) return null
         return runCatching { WeatherClient.parseForecast(p.cacheJson) }.getOrNull()
     }
 
-    fun decide(p: Prefs, forecast: Forecast, occ: Long): Decision {
-        val early = occ - p.advanceMin * 60_000L
-        return RainDecider.decide(forecast, early / 1000, occ / 1000, p.probThreshold)
+    fun decide(a: Alarm, forecast: Forecast, occ: Long): Decision {
+        val early = occ - a.advanceMin * 60_000L
+        return RainDecider.decide(forecast, early / 1000, occ / 1000, a.probThreshold)
     }
 
     /** Eseguito dal CheckWeatherReceiver (thread in background). */
-    fun runScheduledCheck(ctx: Context, occ: Long) {
+    fun runScheduledCheck(ctx: Context, id: Int, occ: Long) {
         val p = Prefs(ctx)
-        if (!p.enabled || occ != p.currentOccurrence) return
+        val a = p.alarm(id) ?: return
+        val st = p.state(id)
+        if (!a.enabled || occ != st.currentOccurrence) return
+
         runCatching { LocationHelper.refreshInBackground(ctx, p) }
         if (!p.hasLocation) {
-            p.lastStatus = "Posizione sconosciuta: suonerà all'orario normale"
+            st.lastStatus = "Posizione sconosciuta: suonerà all'orario normale"
             return
         }
         val now = System.currentTimeMillis()
-        val early = occ - p.advanceMin * 60_000L
+        val early = occ - a.advanceMin * 60_000L
         if (early <= now) return
 
-        val forecast = try {
+        val forecast = cached(p, CACHE_REUSE_MS) ?: try {
             fetch(p)
         } catch (e: Exception) {
             val retryAt = now + Scheduler.RETRY_MIN * 60_000L
             if (retryAt < early - 60_000L) {
-                Scheduler.scheduleCheckRetry(ctx, retryAt, occ)
-                p.lastStatus = "Rete non disponibile alle ${Scheduler.fmtTime(now)}, riprovo alle ${Scheduler.fmtTime(retryAt)}"
+                Scheduler.scheduleCheckRetry(ctx, id, retryAt, occ)
+                st.lastStatus = "Rete non disponibile alle ${Scheduler.fmtTime(now)}, riprovo alle ${Scheduler.fmtTime(retryAt)}"
                 return
             }
             cached(p) ?: run {
-                p.lastStatus = "Previsioni non disponibili: suonerà all'orario normale (${Scheduler.fmtTime(occ)})"
+                st.lastStatus = "Previsioni non disponibili: suonerà all'orario normale (${Scheduler.fmtTime(occ)})"
                 return
             }
         }
 
-        val d = decide(p, forecast, occ)
+        val d = decide(a, forecast, occ)
         if (d.rainy) {
-            Scheduler.scheduleEarly(ctx, occ, early)
-            p.earlyReason = "Tra le ${Scheduler.fmtTime(early)} e le ${Scheduler.fmtTime(occ)}: ${d.reason}"
-            p.lastStatus = "Controllo delle ${Scheduler.fmtTime(now)}: ${d.reason} → sveglia anticipata alle ${Scheduler.fmtTime(early)}"
+            Scheduler.scheduleEarly(ctx, id, occ, early)
+            st.earlyReason = "Tra le ${Scheduler.fmtTime(early)} e le ${Scheduler.fmtTime(occ)}: ${d.reason}"
+            st.lastStatus = "Controllo delle ${Scheduler.fmtTime(now)}: ${d.reason} → sveglia anticipata alle ${Scheduler.fmtTime(early)}"
         } else {
-            p.lastStatus = "Controllo delle ${Scheduler.fmtTime(now)}: ${d.reason} → sveglia normale alle ${Scheduler.fmtTime(occ)}"
+            st.lastStatus = "Controllo delle ${Scheduler.fmtTime(now)}: ${d.reason} → sveglia normale alle ${Scheduler.fmtTime(occ)}"
         }
     }
 }

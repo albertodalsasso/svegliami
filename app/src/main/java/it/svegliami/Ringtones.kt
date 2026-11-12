@@ -16,19 +16,17 @@ object Ringtones {
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
 
-    /** Suoneria effettiva: quella scelta, oppure la predefinita. */
-    fun currentUri(ctx: Context): Uri? =
-        Prefs(ctx).ringtoneUri.takeIf { it.isNotEmpty() }?.let(Uri::parse) ?: defaultAlarmUri(ctx)
+    /** Suoneria effettiva: quella indicata, oppure la predefinita se [uri] è vuoto. */
+    fun resolve(ctx: Context, uri: String): Uri? = uri.takeIf { it.isNotEmpty() }?.let(Uri::parse) ?: defaultAlarmUri(ctx)
 
-    fun title(ctx: Context): String {
-        val chosen = Prefs(ctx).ringtoneUri
-        if (chosen.isEmpty()) return "Predefinita del telefono"
-        return runCatching { RingtoneManager.getRingtone(ctx, Uri.parse(chosen))?.getTitle(ctx) }
+    fun title(ctx: Context, uri: String): String {
+        if (uri.isEmpty()) return "Predefinita del telefono"
+        return runCatching { RingtoneManager.getRingtone(ctx, Uri.parse(uri))?.getTitle(ctx) }
             .getOrNull() ?: "Suoneria personalizzata"
     }
 
-    fun preview(ctx: Context): Ringtone? = runCatching {
-        RingtoneManager.getRingtone(ctx, currentUri(ctx))?.apply {
+    fun preview(ctx: Context, uri: String): Ringtone? = runCatching {
+        RingtoneManager.getRingtone(ctx, resolve(ctx, uri))?.apply {
             audioAttributes = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
             play()
@@ -40,9 +38,10 @@ object Ringtones {
         if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_AUDIO
         else Manifest.permission.READ_EXTERNAL_STORAGE
 
-    fun needsStoragePermission(ctx: Context): Boolean {
-        val uri = Prefs(ctx).ringtoneUri
+    fun needsStoragePermission(ctx: Context, uri: String): Boolean {
         if (!uri.startsWith("content://media/external")) return false
         return ContextCompat.checkSelfPermission(ctx, storagePermission()) != PackageManager.PERMISSION_GRANTED
     }
+
+    fun anyNeedsStoragePermission(ctx: Context) = Prefs(ctx).alarms.any { needsStoragePermission(ctx, it.ringtoneUri) }
 }
