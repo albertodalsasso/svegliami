@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import it.svegliami.storage.SleepJournalEntryEntity
 import it.svegliami.storage.SleepRoomRepository
 import java.time.Instant
@@ -33,6 +34,7 @@ class JournalActivity : AppCompatActivity() {
         setContentView(R.layout.activity_journal)
         SystemBars.apply(this)
         findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { finish() }
+        NavigationUi.bind(this, findViewById<BottomNavigationView>(R.id.bottomNavigation), R.id.navJournal)
         form = findViewById(R.id.journalForm)
         moodGroup = findViewById(R.id.moodGroup)
         caffeine = findViewById(R.id.switchCaffeine)

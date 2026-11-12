@@ -20,6 +20,7 @@ import java.util.Locale
 import it.svegliami.analysis.SleepScoreCalculator
 import it.svegliami.analysis.SleepScoreInputs
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 /** Storico delle notti: numeri principali, ipnogramma ed elenco. */
 class SleepActivity : AppCompatActivity() {
@@ -37,6 +38,7 @@ class SleepActivity : AppCompatActivity() {
         setContentView(R.layout.activity_sleep)
         SystemBars.apply(this)
         findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { finish() }
+        NavigationUi.bind(this, findViewById<BottomNavigationView>(R.id.bottomNavigation), R.id.navSleep)
         graph = findViewById(R.id.graph)
         tvNight = findViewById(R.id.tvNight)
         tvNightRange = findViewById(R.id.tvNightRange)

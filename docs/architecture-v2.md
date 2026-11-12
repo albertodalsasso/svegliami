@@ -60,8 +60,10 @@ Una fase è completata solo quando compila e i test applicabili passano. Le misu
 
 ## Incrementi già presenti nel branch
 
-- Sleep Score spiegabile con pesi validati, componenti audio omesse quando non misurate, e indicazione che la regolarità corrente usa l'avvio del monitoraggio come proxy.
+- Sleep Score spiegabile con pesi iniziali configurabili nel calcolatore, componenti audio omesse quando non misurate, e indicazione che la regolarità corrente usa l'avvio del monitoraggio come proxy.
 - Modalità combinata con sensor fusion pesata dalla copertura campioni e fallback del microfono all'accelerometro.
 - Campo JSON opzionale per la modalità e per i flussi movimento/suono; le sessioni legacy vengono lette con i default esistenti.
 - Room 2.8.5 con entità per sessioni/campioni/eventi/registrazioni/diario/sveglie/profili e importazione iniziale asincrona dei JSON legacy. JSON resta il percorso compatibile della UI in questo incremento; un successivo passaggio potrà rendere Room fonte di lettura dopo verifica della migrazione su dispositivi reali.
 - Nessun codice o modello esterno incorporato finora. Room usa la release stabile AndroidX 2.8.5; le guide ufficiali Health Connect richiedono consenso/permessi separati e distinguono sessione e fasi importate.
+- Insights iniziali calcolati dalle sessioni reali: media sonno/score, grafici per notte e debito sulle ultime sette sessioni osservate rispetto al riferimento 8h.
+- Navigazione inferiore a cinque sezioni condivisa tra Home, storico Sleep, Insights, Diario e Impostazioni.

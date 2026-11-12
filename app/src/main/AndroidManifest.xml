@@ -67,6 +67,12 @@
             android:label="Diario del sonno"
             android:parentActivityName=".MainActivity" />
 
+        <activity
+            android:name=".InsightsActivity"
+            android:exported="false"
+            android:label="Insights"
+            android:parentActivityName=".MainActivity" />
+
         <service
             android:name=".SleepService"
             android:exported="false"

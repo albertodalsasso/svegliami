@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/night_bg"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:title="Insights"
+        app:titleTextColor="@color/on_surface" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="32dp">
+
+            <TextView
+                android:id="@+id/tvInsightsEmpty"
+                style="@style/Svegliami.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Le statistiche appariranno dopo la prima notte monitorata." />
+
+            <LinearLayout
+                android:id="@+id/insightsContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
+
+                    <include android:id="@+id/statAverageSleep" layout="@layout/item_stat"
+                        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:layout_marginEnd="6dp" />
+                    <include android:id="@+id/statAverageScore" layout="@layout/item_stat"
+                        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="24dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp">
+                        <TextView style="@style/Svegliami.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SLEEP SCORE NEL TEMPO" />
+                        <it.svegliami.SleepInsightsChartView android:id="@+id/scoreChart" android:layout_width="match_parent" android:layout_height="176dp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="24dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp">
+                        <TextView style="@style/Svegliami.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ORE DI SONNO PER NOTTE" />
+                        <it.svegliami.SleepInsightsChartView android:id="@+id/durationChart" android:layout_width="match_parent" android:layout_height="176dp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="24dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp">
+                        <TextView style="@style/Svegliami.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DEBITO STIMATO · ULTIME 7 SESSIONI" />
+                        <TextView android:id="@+id/tvSleepDebt" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:textColor="@color/on_surface" android:textSize="28sp" />
+                        <TextView style="@style/Svegliami.Body" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Stima rispetto a un riferimento fisso di 8 ore per notte; non è una misura clinica." android:textSize="12sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/surface"
+        app:itemIconTint="@color/nav_item_tint"
+        app:itemTextColor="@color/nav_item_tint"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/menu_bottom_nav" />
+</LinearLayout>
