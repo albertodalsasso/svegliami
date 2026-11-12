@@ -11,11 +11,16 @@ android {
         applicationId = "it.svegliami"
         minSdk = 26
         targetSdk = 36
-        // In CI il numero di versione è il numero progressivo della build di GitHub Actions:
-        // Google Play rifiuta un aggiornamento con versionCode uguale o più basso del precedente.
-        val build = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
-        versionCode = build
-        versionName = "1.0.$build"
+        // Versione delle release con tag (vX.Y), quella che compila F-Droid.
+        // Va aumentata a mano prima di ogni nuovo tag.
+        versionCode = 1
+        versionName = "1.0"
+        // In GitHub Actions il numero di versione è il numero progressivo della build, così
+        // ogni AAB per Google Play ha un versionCode più alto del precedente.
+        System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.let {
+            versionCode = it
+            versionName = "1.0.$it"
+        }
     }
 
     // Chiave di firma fissa (da variabili d'ambiente, in CI dai segreti del repository).

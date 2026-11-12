@@ -1,0 +1,37 @@
+When it rains you need more time to get ready and be on time. Svegliami checks the forecast before your alarm and, if rain is expected, wakes you up earlier.
+
+Note: the app interface is in Italian.
+
+☔ ALARM THAT RINGS EARLIER WHEN IT RAINS
+• Set the time, e.g. 7:00, and how much earlier to ring: 10 to 90 minutes.
+• Shortly before, the app downloads the forecast for your location. If rain is expected between 6:30 and 7:00, it wakes you at 6:30.
+• You choose the threshold: forecast rain, or rain probability above a percentage.
+• The regular alarm is always scheduled: with no network or no forecast it still rings at the set time.
+
+⏰ MULTIPLE ALARMS, EACH WITH ITS OWN RULES
+• Name, time, weekdays, advance, rain threshold and ringtone for each alarm.
+• Repeating or one-time alarms.
+• 9-minute snooze, full-screen alarm even on the lock screen.
+
+🌙 SMART ALARM AND SLEEP TRACKING
+No smartwatch needed: at night tap «Buonanotte» and choose where you leave the phone.
+• On the mattress: the accelerometer senses when you move.
+• On the nightstand: the microphone only measures the loudness of movements. Audio is never recorded or stored.
+Within the window you choose, up to 45 minutes before, the alarm rings as soon as you are in light sleep. If you are sleeping deeply, it still rings at the set time.
+
+📊 SLEEP HISTORY
+• Chart of each night with estimated stages: deep, light, awake.
+• Time in bed, estimated sleep, awakenings.
+• Snore detection, with the phone on the nightstand.
+Stages are estimated from movement: they are an indication, not a medical measurement.
+
+📍 LOCATION
+Use GPS or search for your city. With automatic updates the location refreshes every time you open the app, handy when travelling.
+
+🔒 PRIVACY
+• No account, no ads, no usage analytics.
+• Alarms and sleep data stay on your phone.
+• The weather service Open-Meteo only receives the coordinates or the city name.
+• Free software (GPL-3.0), source code on GitHub.
+
+Weather data: Open-Meteo.com (CC BY 4.0).

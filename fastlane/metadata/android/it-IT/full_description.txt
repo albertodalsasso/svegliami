@@ -30,6 +30,6 @@ Usa la posizione GPS o cerca la tua città. Con l'aggiornamento automatico la lo
 • Nessun account, nessuna pubblicità, nessuna statistica d'uso.
 • Sveglie e dati del sonno restano sul telefono.
 • Al servizio meteo Open-Meteo arrivano solo le coordinate o il nome della città.
-• Codice sorgente libero su GitHub.
+• Software libero (licenza GPL-3.0), codice sorgente su GitHub.
 
 Previsioni meteo: Open-Meteo.com (CC BY 4.0).

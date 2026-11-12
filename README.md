@@ -67,3 +67,10 @@ https://github.com/albertodalsasso/svegliami/releases/download/apk/svegliami.aab
 Privacy policy (italiano e inglese): https://albertodalsasso.github.io/svegliami/privacy.html
 
 Scheda dello store (testi, icona, immagini) e risposte ai moduli della Play Console: [`fastlane/PLAY_CONSOLE.md`](fastlane/PLAY_CONSOLE.md).
+
+## F-Droid
+Metadati e istruzioni per la richiesta di inserimento: [`fdroid/README.md`](fdroid/README.md).
+
+## Licenza
+Svegliami è software libero, distribuito con licenza [GNU GPL v3 o successiva](LICENSE).
+Previsioni meteo: [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).

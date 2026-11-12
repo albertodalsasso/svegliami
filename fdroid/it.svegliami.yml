@@ -1,0 +1,25 @@
+Categories:
+  - Alarm Clock
+  - Weather
+License: GPL-3.0-or-later
+SourceCode: https://github.com/albertodalsasso/svegliami
+IssueTracker: https://github.com/albertodalsasso/svegliami/issues
+Changelog: https://github.com/albertodalsasso/svegliami/commits/main
+
+AutoName: Svegliami
+
+RepoType: git
+Repo: https://github.com/albertodalsasso/svegliami.git
+
+Builds:
+  - versionName: '1.0'
+    versionCode: 1
+    commit: v1.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[0-9.]+$
+CurrentVersion: '1.0'
+CurrentVersionCode: 1

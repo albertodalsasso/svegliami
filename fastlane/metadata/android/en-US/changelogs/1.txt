@@ -1,0 +1,1 @@
+First release: alarm that rings earlier when rain is forecast, multiple alarms, smart alarm in light sleep, sleep tracking with accelerometer or microphone, and snore detection.

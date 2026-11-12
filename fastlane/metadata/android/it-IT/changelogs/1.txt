@@ -1,0 +1,1 @@
+Prima versione: sveglia che si anticipa se piove, più sveglie, sveglia intelligente nel sonno leggero, monitoraggio del sonno con accelerometro o microfono e rilevamento del russare.
