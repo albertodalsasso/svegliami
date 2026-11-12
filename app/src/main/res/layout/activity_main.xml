@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/tvPerms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#C62828"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnPerms"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Concedi permessi"
+            android:visibility="gone" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swEnabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Sveglia attiva"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/btnTime"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="07:00"
+            android:textSize="64sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <CheckBox android:id="@+id/d1" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="L" />
+            <CheckBox android:id="@+id/d2" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="M" />
+            <CheckBox android:id="@+id/d3" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="M" />
+            <CheckBox android:id="@+id/d4" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="G" />
+            <CheckBox android:id="@+id/d5" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="V" />
+            <CheckBox android:id="@+id/d6" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="S" />
+            <CheckBox android:id="@+id/d7" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="D" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Se piove, anticipa di:" />
+
+        <Spinner
+            android:id="@+id/spAdvance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tvProb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+
+        <SeekBar
+            android:id="@+id/sbProb"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Località per il meteo" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/etCity"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Es. Milano"
+                android:imeOptions="actionSearch"
+                android:inputType="textCapWords" />
+
+            <Button
+                android:id="@+id/btnSearch"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cerca" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnGps"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📍 Usa la mia posizione (GPS)" />
+
+        <CheckBox
+            android:id="@+id/cbAutoLoc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Aggiorna la posizione automaticamente (utile in viaggio)" />
+
+        <TextView
+            android:id="@+id/tvPlace"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Salva" />
+
+        <Button
+            android:id="@+id/btnTest"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Controlla il meteo adesso" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textSize="15sp" />
+    </LinearLayout>
+</ScrollView>
