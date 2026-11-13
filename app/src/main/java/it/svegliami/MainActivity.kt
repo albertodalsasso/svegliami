@@ -110,13 +110,12 @@ class MainActivity : AppCompatActivity() {
         toggleSleepMode.check(when (p.sleepTrackingMode) {
             SleepTrackingMode.NIGHTSTAND -> R.id.btnModeNightstand
             SleepTrackingMode.MATTRESS -> R.id.btnModeBed
-            SleepTrackingMode.COMBINED -> R.id.btnModeCombined
+            SleepTrackingMode.COMBINED -> R.id.btnModeBed
         })
         toggleSleepMode.addOnButtonCheckedListener { _, id, checked ->
             if (checked) {
                 p.sleepTrackingMode = when (id) {
                     R.id.btnModeNightstand -> SleepTrackingMode.NIGHTSTAND
-                    R.id.btnModeCombined -> SleepTrackingMode.COMBINED
                     else -> SleepTrackingMode.MATTRESS
                 }
                 renderSleep()
@@ -327,7 +326,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             val where = when (p.sleepTrackingMode) {
                 SleepTrackingMode.NIGHTSTAND -> "sul comodino, con il microfono verso il letto"
-                SleepTrackingMode.COMBINED -> "sul materasso vicino al cuscino, con il microfono attivo"
+                SleepTrackingMode.COMBINED -> "sul materasso, vicino al cuscino"
                 SleepTrackingMode.MATTRESS -> "sul materasso, vicino al cuscino"
             }
             tvSleep.text = if (p.alarms.none { it.enabled && it.smartWindowMin > 0 }) {
@@ -355,7 +354,7 @@ class MainActivity : AppCompatActivity() {
         SleepService.start(this)
         val where = when (p.sleepTrackingMode) {
             SleepTrackingMode.NIGHTSTAND -> "sul comodino, vicino al letto"
-            SleepTrackingMode.COMBINED -> "sul materasso vicino al cuscino; il microfono analizzerà i rumori"
+            SleepTrackingMode.COMBINED -> "sul materasso, vicino al cuscino"
             SleepTrackingMode.MATTRESS -> "sul materasso, vicino al cuscino"
         }
         Toast.makeText(this, "Metti il telefono $where. Buonanotte!", Toast.LENGTH_LONG).show()

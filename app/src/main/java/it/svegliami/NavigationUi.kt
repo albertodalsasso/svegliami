@@ -15,7 +15,7 @@ object NavigationUi {
                 R.id.navSleep -> launch(activity, SleepActivity::class.java)
                 R.id.navInsights -> launch(activity, InsightsActivity::class.java)
                 R.id.navJournal -> launch(activity, JournalActivity::class.java)
-                R.id.navSettings -> if (activity is MainActivity) activity.scrollToSettings() else launchMain(activity, true)
+                R.id.navSettings -> launch(activity, SettingsActivity::class.java)
                 else -> return@setOnItemSelectedListener false
             }
             true
@@ -23,7 +23,6 @@ object NavigationUi {
         navigation.setOnItemReselectedListener { item ->
             if (activity is MainActivity) when (item.itemId) {
                 R.id.navHome -> activity.scrollToTop()
-                R.id.navSettings -> activity.scrollToSettings()
             }
         }
     }

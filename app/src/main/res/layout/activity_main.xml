@@ -193,13 +193,6 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="🎙  Comodino" />
-                    <Button
-                        android:id="@+id/btnModeCombined"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Combinata" />
                 </com.google.android.material.button.MaterialButtonToggleGroup>
 
                 <Button

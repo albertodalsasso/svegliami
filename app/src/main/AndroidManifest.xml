@@ -73,6 +73,12 @@
             android:label="Insights"
             android:parentActivityName=".MainActivity" />
 
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="Impostazioni"
+            android:parentActivityName=".MainActivity" />
+
         <service
             android:name=".SleepService"
             android:exported="false"

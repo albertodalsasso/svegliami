@@ -170,7 +170,9 @@ class Prefs(ctx: Context) {
 
     /** Nuova preferenza; se assente, conserva la scelta storica a due modalità. */
     var sleepTrackingMode: SleepTrackingMode
-        get() = sp.getString("sleepTrackingMode", null)?.let { runCatching { SleepTrackingMode.valueOf(it) }.getOrNull() }
+        get() = sp.getString("sleepTrackingMode", null)
+            ?.let { runCatching { SleepTrackingMode.valueOf(it) }.getOrNull() }
+            ?.let { if (it == SleepTrackingMode.COMBINED) SleepTrackingMode.MATTRESS else it }
             ?: if (sp.getBoolean("sleepUseMic", false)) SleepTrackingMode.NIGHTSTAND else SleepTrackingMode.MATTRESS
         set(v) = sp.edit().putString("sleepTrackingMode", v.name).putBoolean("sleepUseMic", v == SleepTrackingMode.NIGHTSTAND).apply()
 

@@ -10,10 +10,9 @@ Esempio: sveglia alle 07:00 con anticipo di 30 minuti.
 La sveglia normale è **sempre** programmata. Se meteo o rete non funzionano, suoni comunque all'orario normale.
 
 ## Sveglia intelligente e monitoraggio del sonno
-Senza smartwatch, in tre modalità a scelta:
+Senza smartwatch, scegli una delle due modalità:
 - **Sul materasso** (accelerometro): il telefono sente le vibrazioni quando ti muovi.
 - **Sul comodino** (microfono): l'app misura solo il **volume** ogni 100 ms (fruscio di lenzuola e coperte) rispetto al rumore di fondo della stanza. **L'audio non viene mai registrato né salvato**, resta solo un punteggio al minuto. Rumori costanti come un ventilatore non contano, ma un partner o un animale nella stanza possono disturbare la misura.
-- **Combinata**: usa accelerometro e microfono insieme e pesa i segnali in base alla copertura dei campioni; se il microfono non è disponibile, continua con l'accelerometro.
 1. In una sveglia scegli **🌙 Sveglia intelligente**: fino a 10/20/30/45 minuti prima.
 2. La sera scegli dove metti il telefono, premi **🌙 Buonanotte** e lascialo sul materasso vicino al cuscino oppure sul comodino (meglio in carica).
 3. Nella finestra, al primo movimento (sonno leggero) la sveglia suona. Se non ti muovi, suona comunque all'orario previsto.
@@ -24,7 +23,7 @@ Senza smartwatch, in tre modalità a scelta:
 
 Le fasi sono stimate dai movimenti (attigrafia): sono un'indicazione, non una misura clinica.
 
-La modalità **combinata** usa accelerometro e microfono insieme e pesa i segnali in base alla copertura dei campioni disponibili. Se il microfono non è disponibile, il monitoraggio continua con l'accelerometro.
+Le sessioni storiche create con la modalità combinata restano leggibili. Le nuove preferenze selezionabili sono comodino oppure materasso.
 
 Lo storico mostra anche uno **Sleep Score sperimentale** da 0 a 100. Il punteggio spiega le componenti misurate e non penalizza i sensori non disponibili; la regolarità usa per ora l'orario di avvio del monitoraggio come proxy. Non è una valutazione medica. Il diario consente di annotare umore, caffeina, attività, stress, pasto e note per ogni sessione.
 
@@ -41,6 +40,10 @@ La sezione **Insights** riassume le sessioni raccolte, mostra l'andamento dello 
 4. Concedi i permessi segnalati in alto, compresa l'esclusione dall'ottimizzazione della batteria: serve perché il controllo notturno abbia la rete.
 
 Nella schermata di una sveglia, «Controlla il meteo adesso» mostra cosa deciderebbe l'app per la sua prossima occorrenza.
+
+## Impostazioni e stato delle funzionalità
+
+La scheda **Impostazioni** permette di scegliere la modalità di monitoraggio, vedere la località meteo e aprire la relativa gestione. Account e sincronizzazione non sono ancora disponibili. L'audio non viene salvato: clip, Sound Timeline, Morning Report e calendario mensile sono ancora in sviluppo.
 
 ## Struttura
 | File | Ruolo |
@@ -59,6 +62,8 @@ Nella schermata di una sveglia, «Controlla il meteo adesso» mostra cosa decide
 | `SleepStore.kt` / `SleepActivity.kt` / `SleepGraphView.kt` | Storico delle notti e grafico |
 | `AlarmFire.kt` | Fa suonare una sveglia (programmata o intelligente) |
 | `Receivers.kt` | Receiver per la sveglia, per il controllo meteo e per il riavvio |
+
+La situazione tecnica e i limiti correnti sono descritti in [ARCHITECTURE.md](ARCHITECTURE.md), [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md), [KNOWN_ISSUES.md](KNOWN_ISSUES.md) e [ROADMAP.md](ROADMAP.md). Le note sulle dipendenze e sulla sincronizzazione sono in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) e [SYNC_ARCHITECTURE.md](SYNC_ARCHITECTURE.md).
 
 ## Scaricare l'APK sul telefono
 A ogni push su `main`, GitHub Actions compila l'app e pubblica l'APK con un link fisso:

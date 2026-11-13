@@ -67,3 +67,9 @@ Una fase è completata solo quando compila e i test applicabili passano. Le misu
 - Nessun codice o modello esterno incorporato finora. Room usa la release stabile AndroidX 2.8.5; le guide ufficiali Health Connect richiedono consenso/permessi separati e distinguono sessione e fasi importate.
 - Insights iniziali calcolati dalle sessioni reali: media sonno/score, grafici per notte e debito sulle ultime sette sessioni osservate rispetto al riferimento 8h.
 - Navigazione inferiore a cinque sezioni condivisa tra Home, storico Sleep, Insights, Diario e Impostazioni.
+
+## Aggiornamento prodotto
+
+La specifica di prodotto successiva restringe la scelta visibile a comodino oppure materasso. Il supporto `COMBINED` rimane nel modello/servizio per leggere preferenze e sessioni legacy; `Prefs.sleepTrackingMode` normalizza la vecchia preferenza a materasso e la nuova UI non offre la combinazione. È stata aggiunta una `SettingsActivity` con selezione persistente del sensore, località meteo corrente e stato esplicito dell'account/audio. La località continua a essere modificata nella sezione Home esistente.
+
+La navigazione a cinque voci è ora instradata alla pagina Impostazioni effettiva; la pagina non implementa account, tema o configurazioni che non esistono ancora. I documenti di progetto aggiornati sono nella root (`ARCHITECTURE.md`, `ROADMAP.md`, `TECHNICAL_AUDIT.md`, `KNOWN_ISSUES.md`, `THIRD_PARTY_LICENSES.md`, `SYNC_ARCHITECTURE.md`).
