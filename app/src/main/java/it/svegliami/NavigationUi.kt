@@ -29,14 +29,15 @@ object NavigationUi {
 
     private fun launch(activity: Activity, destination: Class<*>) {
         if (activity.javaClass == destination) return
-        activity.startActivity(Intent(activity, destination))
-        if (activity !is MainActivity) activity.finish()
+        val intent = Intent(activity, destination).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        activity.startActivity(intent)
+        activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 
     private fun launchMain(activity: Activity, openSettings: Boolean = false) {
-        val intent = Intent(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val intent = Intent(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
         if (openSettings) intent.putExtra(EXTRA_OPEN_SETTINGS, true)
         activity.startActivity(intent)
-        if (activity !is MainActivity) activity.finish()
+        activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 }

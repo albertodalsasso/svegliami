@@ -214,6 +214,15 @@
                     android:textColor="@color/on_tertiary_container" />
 
                 <Button
+                    android:id="@+id/btnSleepCalendar"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:text="Calendario del sonno  →"
+                    android:textColor="@color/on_tertiary_container" />
+
+                <Button
                     android:id="@+id/btnJournal"
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
@@ -313,16 +322,18 @@
         app:labelVisibilityMode="labeled"
         app:menu="@menu/menu_bottom_nav" />
 
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
-        android:layout_marginBottom="84dp"
-        android:text="Nuova sveglia"
+        android:layout_margin="16dp"
+        android:contentDescription="Nuova sveglia"
+        app:layout_anchor="@id/bottomNavigation"
+        app:layout_anchorGravity="top|end"
         app:backgroundTint="@color/primary"
-        app:icon="@drawable/ic_add"
-        app:iconTint="@color/on_primary"
-        android:textColor="@color/on_primary" />
+        app:fabSize="normal"
+        app:srcCompat="@drawable/ic_add"
+        app:tint="@color/on_primary" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

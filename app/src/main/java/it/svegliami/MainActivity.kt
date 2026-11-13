@@ -101,6 +101,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnSleepHistory).setOnClickListener {
             startActivity(Intent(this, SleepActivity::class.java))
         }
+        findViewById<Button>(R.id.btnSleepCalendar).setOnClickListener {
+            startActivity(Intent(this, SleepCalendarActivity::class.java))
+        }
         findViewById<Button>(R.id.btnJournal).setOnClickListener {
             startActivity(Intent(this, JournalActivity::class.java))
         }

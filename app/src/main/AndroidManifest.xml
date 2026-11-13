@@ -79,6 +79,10 @@
             android:label="Impostazioni"
             android:parentActivityName=".MainActivity" />
 
+        <activity android:name=".MorningReportActivity" android:exported="false" android:parentActivityName=".MainActivity" />
+        <activity android:name=".SleepCalendarActivity" android:exported="false" android:parentActivityName=".MainActivity" />
+        <activity android:name=".SoundTimelineActivity" android:exported="false" android:parentActivityName=".MainActivity" />
+
         <service
             android:name=".SleepService"
             android:exported="false"

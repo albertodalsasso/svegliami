@@ -45,6 +45,9 @@ class SleepActivity : AppCompatActivity() {
         tvDetails = findViewById(R.id.tvDetails)
         nightList = findViewById(R.id.nightList)
         findViewById<TextView>(R.id.tvLegend).text = legend()
+        tvNightRange.setOnClickListener {
+            selected?.let { session -> startActivity(android.content.Intent(this, MorningReportActivity::class.java).putExtra(MorningReportActivity.EXTRA_SESSION_START, session.start)) }
+        }
         stat(R.id.statSleep, "Sonno")
         stat(R.id.statDeep, "Profondo")
         stat(R.id.statWake, "Risvegli")
