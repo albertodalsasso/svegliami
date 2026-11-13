@@ -36,7 +36,7 @@ object WeatherCheck {
         val p = Prefs(ctx)
         val a = p.alarm(id) ?: return
         val st = p.state(id)
-        if (!a.enabled || occ != st.currentOccurrence) return
+        if (!a.enabled || !a.rainEnabled || occ != st.currentOccurrence) return
 
         runCatching { LocationHelper.refreshInBackground(ctx, p) }
         if (!p.hasLocation) {

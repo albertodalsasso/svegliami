@@ -35,7 +35,7 @@ La sezione **Statistiche** riassume le sessioni raccolte, mostra l'andamento del
    - **📍 Usa la mia posizione (GPS)**: rileva la posizione una volta. Aspetta il GPS fino a 20 s, poi usa la posizione da rete.
    - **Aggiorna a ogni apertura dell'app**: rileva di nuovo la posizione ogni volta che apri l'app, comodo in viaggio. Il controllo meteo notturno usa l'ultima posizione rilevata: l'app non chiede la posizione in background.
    - oppure cerca una città per nome. Scegliendola, l'aggiornamento automatico si disattiva.
-   Poi, nella Home, premi **+ Nuova** accanto a «Sveglie»: nome, orario, giorni, anticipo, soglia e suoneria. **Nessun giorno selezionato = suona una volta sola** e poi si disattiva. Tocca una sveglia per modificarla o eliminarla, l'interruttore la attiva o la disattiva.
+   Poi, nella Home, premi **+ Nuova** accanto a «Sveglie»: nome, orario, giorni, anticipo, soglia e suoneria. L'anticipo per pioggia si può spegnere per ogni sveglia con il suo interruttore: in quel caso la sveglia suona sempre all'orario impostato. **Nessun giorno selezionato = suona una volta sola** e poi si disattiva. Tocca una sveglia per modificarla o eliminarla, l'interruttore la attiva o la disattiva.
 4. Concedi i permessi segnalati in alto, compresa l'esclusione dall'ottimizzazione della batteria: serve perché il controllo notturno abbia la rete.
 
 Nella schermata di una sveglia, «Controlla il meteo adesso» mostra cosa deciderebbe l'app per la sua prossima occorrenza.

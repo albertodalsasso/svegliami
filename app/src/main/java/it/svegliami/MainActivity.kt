@@ -184,7 +184,7 @@ class MainActivity : AppCompatActivity() {
         tvHeroTime.text = Scheduler.fmtTime(t)
         tvHeroWhen.text = "${dayWord(t)} · tra ${duration(t - now)}"
 
-        tvHeroRain.visibility = View.VISIBLE
+        tvHeroRain.visibility = if (a.rainEnabled || rainy) View.VISIBLE else View.GONE
         tvHeroRain.text = when {
             rainy -> "☔  Anticipata: piove${shortPlace()?.let { " a $it" } ?: ""} (era alle ${Scheduler.fmtTime(st.currentOccurrence)})"
             p.hasLocation || p.autoLocation -> "☔  Se piove${shortPlace()?.let { " a $it" } ?: ""}: alle ${Scheduler.fmtTime(st.currentOccurrence - a.advanceMin * 60_000L)}"
@@ -247,7 +247,7 @@ class MainActivity : AppCompatActivity() {
             val active = a.enabled && occ > 0
             v.findViewById<TextView>(R.id.badgeRain).apply {
                 when {
-                    !active || !(p.hasLocation || p.autoLocation) -> visibility = View.GONE
+                    !active || !a.rainEnabled || !(p.hasLocation || p.autoLocation) -> visibility = View.GONE
                     st.earlyAt > 0 -> {
                         visibility = View.VISIBLE
                         text = "☔ Anticipata alle ${Scheduler.fmtTime(st.earlyAt)}"

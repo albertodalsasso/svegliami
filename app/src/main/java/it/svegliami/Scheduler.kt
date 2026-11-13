@@ -104,7 +104,7 @@ object Scheduler {
         st.currentOccurrence = occ
         setClock(ctx, occ, pi(ctx, id, KIND_NORMAL, occ))
 
-        if (!p.hasLocation && !p.autoLocation) return
+        if (!a.rainEnabled || (!p.hasLocation && !p.autoLocation)) return
         val early = occ - a.advanceMin * 60_000L
         // Prima anche dell'eventuale finestra intelligente, che si sposta in avanti se piove.
         val check = early - (a.smartWindowMin + CHECK_LEAD_MIN) * 60_000L

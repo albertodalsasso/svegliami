@@ -106,12 +106,32 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="20dp">
-            <TextView
-                style="@style/Svegliami.Overline"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:text="☔  Se piove, anticipa di (min)" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvRainTitle"
+                            style="@style/Svegliami.Overline"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="☔  Se piove, anticipa di (min)" />
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/swRain"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rainOptions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="vertical">
                     <it.svegliami.SegmentRow
                         android:id="@+id/chipAdvance"
                         android:layout_width="match_parent"
@@ -132,6 +152,7 @@
                         android:valueFrom="10"
                         android:valueTo="100"
                         app:labelBehavior="gone" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

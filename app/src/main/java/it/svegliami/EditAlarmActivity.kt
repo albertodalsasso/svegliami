@@ -42,6 +42,9 @@ class EditAlarmActivity : AppCompatActivity() {
     private lateinit var chipDays: SegmentRow
     private lateinit var tvDaysHint: TextView
     private lateinit var chipAdvance: SegmentRow
+    private lateinit var swRain: com.google.android.material.materialswitch.MaterialSwitch
+    private lateinit var rainOptions: View
+    private lateinit var tvRainTitle: TextView
     private lateinit var chipSmart: SegmentRow
     private lateinit var sliderProb: Slider
     private lateinit var tvProb: TextView
@@ -82,6 +85,9 @@ class EditAlarmActivity : AppCompatActivity() {
         chipDays = findViewById(R.id.chipDays)
         tvDaysHint = findViewById(R.id.tvDaysHint)
         chipAdvance = findViewById(R.id.chipAdvance)
+        swRain = findViewById(R.id.swRain)
+        rainOptions = findViewById(R.id.rainOptions)
+        tvRainTitle = findViewById(R.id.tvRainTitle)
         chipSmart = findViewById(R.id.chipSmart)
         sliderProb = findViewById(R.id.sliderProb)
         tvProb = findViewById(R.id.tvProb)
@@ -101,6 +107,9 @@ class EditAlarmActivity : AppCompatActivity() {
         chipAdvance.setOptions(ADVANCE_OPTIONS.map { "$it" to it }, setOf(adv))
         val smart = if (alarm.smartWindowMin in SMART_OPTIONS) alarm.smartWindowMin else 0
         chipSmart.setOptions(SMART_OPTIONS.map { (if (it == 0) "No" else "$it") to it }, setOf(smart))
+        swRain.isChecked = alarm.rainEnabled
+        swRain.setOnCheckedChangeListener { _, _ -> updateRainSection() }
+        updateRainSection()
         sliderProb.value = (alarm.probThreshold / 10 * 10).coerceIn(10, 100).toFloat()
         sliderProb.addOnChangeListener { _, _, _ -> updateProbLabel() }
         updateProbLabel()
@@ -121,6 +130,12 @@ class EditAlarmActivity : AppCompatActivity() {
     }
 
     private fun probValue() = sliderProb.value.toInt()
+
+    /** Con l'anticipo per pioggia spento si nascondono minuti e soglia: la sveglia suona sempre all'orario. */
+    private fun updateRainSection() {
+        rainOptions.visibility = if (swRain.isChecked) View.VISIBLE else View.GONE
+        tvRainTitle.text = if (swRain.isChecked) "☔  Se piove, anticipa di (min)" else "☔  Anticipa se piove: no"
+    }
     private fun updateTimeLabel() { btnTime.text = "%02d:%02d".format(hour, minute) }
     private fun updateProbLabel() { tvProb.text = "Anticipa anche se la probabilità di pioggia è ≥ ${probValue()}%" }
     private fun updateRingtoneLabel() { btnRingtone.text = "🔔 ${Ringtones.title(this, ringtoneUri)}" }
@@ -139,6 +154,7 @@ class EditAlarmActivity : AppCompatActivity() {
         ringtoneUri = ringtoneUri,
         label = etLabel.text.toString().trim(),
         smartWindowMin = chipSmart.selectedOne(0),
+        rainEnabled = swRain.isChecked,
     )
 
     private fun save() {
