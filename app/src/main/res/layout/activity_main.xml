@@ -17,7 +17,7 @@
             android:paddingStart="20dp"
             android:paddingTop="16dp"
             android:paddingEnd="20dp"
-            android:paddingBottom="176dp">
+            android:paddingBottom="104dp">
 
             <!-- Intestazione -->
             <TextView
@@ -124,13 +124,32 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Sveglie -->
-            <TextView
-                style="@style/Svegliami.Title"
-                android:layout_width="wrap_content"
+            <!-- Sveglie: titolo con il pulsante per aggiungerne una -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:text="Sveglie" />
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/Svegliami.Title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Sveglie" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAdd"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nuova"
+                    android:textColor="@color/on_primary"
+                    app:backgroundTint="@color/primary"
+                    app:icon="@drawable/ic_add"
+                    app:iconTint="@color/on_primary" />
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/alarmList"
@@ -144,7 +163,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingVertical="16dp"
-                android:text="Nessuna sveglia: tocca «Nuova sveglia» per crearne una." />
+                android:text="Nessuna sveglia: tocca «Nuova» per crearne una." />
 
             <!-- Sonno -->
             <TextView
@@ -313,16 +332,4 @@
         app:labelVisibilityMode="labeled"
         app:menu="@menu/menu_bottom_nav" />
 
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/btnAdd"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="96dp"
-        android:text="Nuova sveglia"
-        app:backgroundTint="@color/primary"
-        app:icon="@drawable/ic_add"
-        app:iconTint="@color/on_primary"
-        android:textColor="@color/on_primary" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
