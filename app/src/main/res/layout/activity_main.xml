@@ -227,7 +227,9 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="🛏  Materasso" />
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:text="🛏 Materasso" />
 
                     <Button
                         android:id="@+id/btnModeNightstand"
@@ -235,7 +237,9 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="🎙  Comodino" />
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:text="🎙 Comodino" />
                 </com.google.android.material.button.MaterialButtonToggleGroup>
 
                 <Button
