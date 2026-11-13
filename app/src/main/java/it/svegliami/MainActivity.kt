@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -88,6 +89,7 @@ class MainActivity : AppCompatActivity() {
         btnGps = findViewById(R.id.btnGps)
         swAutoLoc = findViewById<MaterialSwitch>(R.id.swAutoLoc)
         etCity = findViewById(R.id.etCity)
+        NavigationUi.bind(this, findViewById<BottomNavigationView>(R.id.bottomNavigation), R.id.navHome)
 
         findViewById<View>(R.id.btnAdd).setOnClickListener {
             startActivity(Intent(this, EditAlarmActivity::class.java))
@@ -99,10 +101,23 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnSleepHistory).setOnClickListener {
             startActivity(Intent(this, SleepActivity::class.java))
         }
-        toggleSleepMode.check(if (p.sleepUseMic) R.id.btnModeNightstand else R.id.btnModeBed)
+        findViewById<Button>(R.id.btnJournal).setOnClickListener {
+            startActivity(Intent(this, JournalActivity::class.java))
+        }
+        findViewById<Button>(R.id.btnInsights).setOnClickListener {
+            startActivity(Intent(this, InsightsActivity::class.java))
+        }
+        toggleSleepMode.check(when (p.sleepTrackingMode) {
+            SleepTrackingMode.NIGHTSTAND -> R.id.btnModeNightstand
+            SleepTrackingMode.MATTRESS -> R.id.btnModeBed
+            SleepTrackingMode.COMBINED -> R.id.btnModeBed
+        })
         toggleSleepMode.addOnButtonCheckedListener { _, id, checked ->
             if (checked) {
-                p.sleepUseMic = id == R.id.btnModeNightstand
+                p.sleepTrackingMode = when (id) {
+                    R.id.btnModeNightstand -> SleepTrackingMode.NIGHTSTAND
+                    else -> SleepTrackingMode.MATTRESS
+                }
                 renderSleep()
             }
         }
@@ -127,9 +142,24 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         tvToday.text = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN).format(LocalDate.now())
         renderAll()
+        val navigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        if (intent.getBooleanExtra(NavigationUi.EXTRA_OPEN_SETTINGS, false)) {
+            navigation.selectedItemId = R.id.navSettings
+            scrollToSettings()
+            intent.removeExtra(NavigationUi.EXTRA_OPEN_SETTINGS)
+        } else {
+            navigation.selectedItemId = R.id.navHome
+        }
         handler.post(ticker)
         // Con l'aggiornamento automatico attivo, ogni apertura dell'app rileva la posizione fresca.
         if (p.autoLocation && LocationHelper.hasForeground(this)) locateNow(manual = false)
+    }
+
+    fun scrollToTop() = findViewById<androidx.core.widget.NestedScrollView>(R.id.mainScroll).smoothScrollTo(0, 0)
+
+    fun scrollToSettings() {
+        val scroll = findViewById<androidx.core.widget.NestedScrollView>(R.id.mainScroll)
+        scroll.post { scroll.smoothScrollTo(0, findViewById<View>(R.id.tvPlace).top) }
     }
 
     override fun onPause() {
@@ -294,7 +324,11 @@ class MainActivity : AppCompatActivity() {
                 "Si ferma da solo quando suona la sveglia."
             btnSleep.text = "Ferma il monitoraggio"
         } else {
-            val where = if (p.sleepUseMic) "sul comodino, con il microfono verso il letto" else "sul materasso, vicino al cuscino"
+            val where = when (p.sleepTrackingMode) {
+                SleepTrackingMode.NIGHTSTAND -> "sul comodino, con il microfono verso il letto"
+                SleepTrackingMode.COMBINED -> "sul materasso, vicino al cuscino"
+                SleepTrackingMode.MATTRESS -> "sul materasso, vicino al cuscino"
+            }
             tvSleep.text = if (p.alarms.none { it.enabled && it.smartWindowMin > 0 }) {
                 "Registra la tua notte. Attiva la sveglia intelligente in una sveglia per svegliarti nel sonno leggero."
             } else {
@@ -310,7 +344,7 @@ class MainActivity : AppCompatActivity() {
                 SleepService.stop()
                 btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
             }
-            p.sleepUseMic && !SleepService.hasMicPermission(this) ->
+            p.sleepTrackingMode.usesMicrophone && !SleepService.hasMicPermission(this) ->
                 requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC)
             else -> startSleep()
         }
@@ -318,7 +352,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun startSleep() {
         SleepService.start(this)
-        val where = if (p.sleepUseMic) "sul comodino, vicino al letto" else "sul materasso, vicino al cuscino"
+        val where = when (p.sleepTrackingMode) {
+            SleepTrackingMode.NIGHTSTAND -> "sul comodino, vicino al letto"
+            SleepTrackingMode.COMBINED -> "sul materasso, vicino al cuscino"
+            SleepTrackingMode.MATTRESS -> "sul materasso, vicino al cuscino"
+        }
         Toast.makeText(this, "Metti il telefono $where. Buonanotte!", Toast.LENGTH_LONG).show()
         btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
     }

@@ -17,6 +17,10 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import it.svegliami.analysis.SleepScoreCalculator
+import it.svegliami.analysis.SleepScoreInputs
+import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 /** Storico delle notti: numeri principali, ipnogramma ed elenco. */
 class SleepActivity : AppCompatActivity() {
@@ -34,6 +38,7 @@ class SleepActivity : AppCompatActivity() {
         setContentView(R.layout.activity_sleep)
         SystemBars.apply(this)
         findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { finish() }
+        NavigationUi.bind(this, findViewById<BottomNavigationView>(R.id.bottomNavigation), R.id.navSleep)
         graph = findViewById(R.id.graph)
         tvNight = findViewById(R.id.tvNight)
         tvNightRange = findViewById(R.id.tvNightRange)
@@ -87,16 +92,35 @@ class SleepActivity : AppCompatActivity() {
         tvNightRange.text = "A letto ${Scheduler.fmtTime(s.start)}–${Scheduler.fmtTime(s.end)} · ${hm(sum.inBedMin)}"
         graph.session = s
 
+        val score = SleepScoreCalculator.calculate(
+            input = SleepScoreInputs(
+                sleepMinutes = sum.asleepMin,
+                inBedMinutes = sum.inBedMin,
+                awakeningCount = sum.awakenings,
+                bedtimeEpochMillis = s.start,
+                snoringMinutes = if (s.mic && s.snore.isNotEmpty()) s.snoreMinutes else null,
+            ),
+            previousBedtimes = sessions.filter { it.start != s.start }.take(13).map { it.start },
+        )
+        findViewById<CircularProgressIndicator>(R.id.scoreProgress).setProgressCompat(score.score, true)
+        findViewById<TextView>(R.id.tvScore).text = score.score.toString()
+        findViewById<TextView>(R.id.tvScoreExplanation).text =
+            "${score.explanation}\nRegolarità basata sull'avvio del monitoraggio. Punteggio sperimentale, non medico."
+
         val pct = { m: Int -> if (sum.asleepMin > 0) m * 100 / sum.asleepMin else 0 }
         setStat(R.id.statSleep, hmShort(sum.asleepMin), "leggero ${hm(sum.lightMin)}")
         setStat(R.id.statDeep, hmShort(sum.deepMin), "${pct(sum.deepMin)}% del sonno")
         setStat(R.id.statWake, "${sum.awakenings}", "sveglio ${hm(sum.awakeMin)}")
-        if (s.mic) setStat(R.id.statSnore, if (s.snoreMinutes == 0) "—" else hmShort(s.snoreMinutes),
+        if (s.trackingMode.usesMicrophone) setStat(R.id.statSnore, if (s.snoreMinutes == 0) "—" else hmShort(s.snoreMinutes),
             if (s.snoreMinutes == 0) "non rilevato" else "${pct(s.snoreMinutes)}% del sonno")
         else setStat(R.id.statSnore, "—", "serve il comodino")
 
         tvDetails.text = buildString {
-            append(if (s.mic) "🎙 Telefono sul comodino (microfono)" else "🛏 Telefono sul materasso (accelerometro)")
+            append(when (s.trackingMode) {
+                SleepTrackingMode.NIGHTSTAND -> "🎙 Telefono sul comodino (microfono)"
+                SleepTrackingMode.MATTRESS -> "🛏 Telefono sul materasso (accelerometro)"
+                SleepTrackingMode.COMBINED -> "🎙🛏 Microfono e accelerometro (combinata)"
+            })
             if (s.smartWakeAt > 0) append("\n🌙 Sveglia intelligente alle ${Scheduler.fmtTime(s.smartWakeAt)} (linea rosa)")
         }
         renderList(sessions)
@@ -112,7 +136,7 @@ class SleepActivity : AppCompatActivity() {
             v.findViewById<TextView>(R.id.tvNightSleep).text = hmShort(sum.asleepMin)
             v.findViewById<TextView>(R.id.tvNightInfo).text =
                 "${Scheduler.fmtTime(s.start)}–${Scheduler.fmtTime(s.end)}" +
-                    (if (s.snoreMinutes > 0) " · russato ${hm(s.snoreMinutes)}" else "") +
+                    (if (s.trackingMode.usesMicrophone && s.snoreMinutes > 0) " · russato ${hm(s.snoreMinutes)}" else "") +
                     (if (s.smartWakeAt > 0) " · 🌙 ${Scheduler.fmtTime(s.smartWakeAt)}" else "")
             v.findViewById<LinearProgressIndicator>(R.id.barNight).progress = sum.asleepMin.coerceAtMost(600)
             v.strokeWidth = if (s.start == selected?.start) (2 * resources.displayMetrics.density).toInt() else 0
