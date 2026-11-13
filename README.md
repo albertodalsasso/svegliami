@@ -31,7 +31,7 @@ La sezione **Statistiche** riassume le sessioni raccolte, mostra l'andamento del
 ## Come aprirlo
 1. Apri questa cartella con **Android Studio** (Ladybug o più recente) e lascia completare la sincronizzazione Gradle.
 2. Collega il telefono con il debug USB attivo e premi ▶ Run.
-3. Nella schermata principale imposta la **località** (vale per tutte le sveglie):
+3. In **Opzioni** (barra in basso) imposta la **località** (vale per tutte le sveglie):
    - **📍 Usa la mia posizione (GPS)**: rileva la posizione una volta. Aspetta il GPS fino a 20 s, poi usa la posizione da rete.
    - **Aggiorna a ogni apertura dell'app**: rileva di nuovo la posizione ogni volta che apri l'app, comodo in viaggio. Il controllo meteo notturno usa l'ultima posizione rilevata: l'app non chiede la posizione in background.
    - oppure cerca una città per nome. Scegliendola, l'aggiornamento automatico si disattiva.

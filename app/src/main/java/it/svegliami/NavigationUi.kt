@@ -5,8 +5,6 @@ import android.content.Intent
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 object NavigationUi {
-    const val EXTRA_OPEN_SETTINGS = "it.svegliami.OPEN_SETTINGS"
-
     fun bind(activity: Activity, navigation: BottomNavigationView, selectedId: Int) {
         markSelected(navigation, selectedId)
         navigation.setOnItemSelectedListener { item ->
@@ -41,10 +39,9 @@ object NavigationUi {
         if (activity !is MainActivity) activity.finish()
     }
 
-    /** Torna alla Home; con [openSettings] la scorre fino alle impostazioni della località. */
-    fun launchMain(activity: Activity, openSettings: Boolean = false) {
+    /** Torna alla Home chiudendo le schermate aperte sopra. */
+    private fun launchMain(activity: Activity) {
         val intent = Intent(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        if (openSettings) intent.putExtra(EXTRA_OPEN_SETTINGS, true)
         activity.startActivity(intent)
         if (activity !is MainActivity) activity.finish()
     }

@@ -29,34 +29,65 @@
             android:paddingTop="8dp"
             android:paddingEnd="20dp">
 
-            <TextView style="@style/Svegliami.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MONITORAGGIO DEL SONNO" />
+            <TextView style="@style/Svegliami.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="METEO E LOCALITÀ" />
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 app:cardCornerRadius="24dp">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp">
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Posizione del telefono" android:textColor="@color/on_surface" android:textSize="18sp" android:textStyle="bold" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Scegli il sensore principale per le prossime sessioni." style="@style/Svegliami.Body" />
-                    <com.google.android.material.button.MaterialButtonToggleGroup
-                        android:id="@+id/settingsSleepMode"
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:id="@+id/tvPlace"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/on_surface"
+                        android:textSize="18sp" />
+
+                    <Button
+                        android:id="@+id/btnGps"
+                        style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        app:selectionRequired="true"
-                        app:singleSelection="true">
-                        <Button android:id="@+id/settingsModeNightstand" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Comodino" />
-                        <Button android:id="@+id/settingsModeMattress" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Materasso" />
-                    </com.google.android.material.button.MaterialButtonToggleGroup>
-                    <TextView android:id="@+id/tvTrackingDescription" style="@style/Svegliami.Body" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                        android:text="📍 Usa la mia posizione (GPS)" />
 
-            <TextView style="@style/Svegliami.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:text="METEO E LOCALITÀ" />
-            <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" app:cardCornerRadius="24dp">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp">
-                    <TextView android:id="@+id/tvSettingsLocation" style="@style/Svegliami.Body" android:layout_width="match_parent" android:layout_height="wrap_content" />
-                    <Button android:id="@+id/btnOpenLocationSettings" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Gestisci località e aggiornamento GPS" />
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/swAutoLoc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Aggiorna a ogni apertura dell'app (utile in viaggio)"
+                        android:textColor="@color/on_surface_variant" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <EditText
+                            android:id="@+id/etCity"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:hint="Oppure cerca una città"
+                            android:inputType="textCapWords"
+                            android:textColor="@color/on_surface"
+                            android:textColorHint="@color/on_surface_variant" />
+
+                        <Button
+                            android:id="@+id/btnSearch"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Cerca" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
