@@ -51,6 +51,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvHeroWhen: TextView
     private lateinit var tvHeroRain: TextView
     private lateinit var tvHeroSmart: TextView
+    private lateinit var tvHeroTitle: TextView
+    private lateinit var swHero: MaterialSwitch
+    private lateinit var heroDays: LinearLayout
+    /** Sveglia mostrata in grande in cima all'elenco (e quindi non ripetuta sotto). */
+    private var heroAlarmId: Int? = null
     private lateinit var alarmList: LinearLayout
     private lateinit var tvEmpty: TextView
     private lateinit var tvSleep: TextView
@@ -72,6 +77,10 @@ class MainActivity : AppCompatActivity() {
         tvHeroWhen = findViewById(R.id.tvHeroWhen)
         tvHeroRain = findViewById(R.id.tvHeroRain)
         tvHeroSmart = findViewById(R.id.tvHeroSmart)
+        tvHeroTitle = findViewById(R.id.tvHeroTitle)
+        swHero = findViewById(R.id.swHero)
+        heroDays = findViewById(R.id.heroDays)
+        hero.setOnClickListener { heroAlarmId?.let { openAlarm(it) } }
         alarmList = findViewById(R.id.alarmList)
         tvEmpty = findViewById(R.id.tvEmpty)
         tvSleep = findViewById(R.id.tvSleep)
@@ -132,27 +141,48 @@ class MainActivity : AppCompatActivity() {
     /** Orario effettivo della prossima suoneria di una sveglia (anticipata se piove). */
     private fun target(st: AlarmState) = if (st.earlyAt > 0) st.earlyAt else st.currentOccurrence
 
+    /**
+     * La prossima sveglia è la prima voce dell'elenco, in grande e con il conto alla rovescia.
+     * Le altre seguono sotto, più piccole (vedi [renderAlarms]).
+     */
     private fun renderHero() {
         val now = System.currentTimeMillis()
-        val next = p.alarms.filter { it.enabled }
+        val alarms = p.alarms
+        val next = alarms.filter { it.enabled }
             .map { it to p.state(it.id) }
             .filter { (_, st) -> st.currentOccurrence > 0 }
             .minByOrNull { (_, st) -> target(st) }
 
+        val previousHero = heroAlarmId
+        heroAlarmId = next?.first?.id
+        // Se cambia la sveglia in cima (per esempio è appena suonata), va rifatto anche l'elenco sotto.
+        if (heroAlarmId != previousHero) alarmList.post { renderAlarms() }
+
+        hero.visibility = if (alarms.isEmpty()) View.GONE else View.VISIBLE
         if (next == null) {
             hero.setBackgroundResource(R.drawable.bg_hero_night)
+            tvHeroTitle.text = "Prossima sveglia"
             tvHeroTime.text = "--:--"
             tvHeroWhen.text = "Nessuna sveglia attiva"
+            swHero.visibility = View.GONE
+            heroDays.visibility = View.GONE
             tvHeroRain.visibility = View.GONE
             tvHeroSmart.visibility = View.GONE
             return
         }
         val (a, st) = next
+        tvHeroTitle.text = if (a.label.isBlank()) "Prossima sveglia" else "Prossima · ${a.label}"
+        swHero.visibility = View.VISIBLE
+        swHero.setOnCheckedChangeListener(null)
+        swHero.isChecked = true
+        swHero.setOnCheckedChangeListener { _, checked -> setAlarmEnabled(a, checked) }
+        heroDays.visibility = View.VISIBLE
+        fillDayDots(heroDays, a)
         val t = target(st)
         val rainy = st.earlyAt > 0
         hero.setBackgroundResource(if (rainy) R.drawable.bg_hero_rain else R.drawable.bg_hero_night)
         tvHeroTime.text = Scheduler.fmtTime(t)
-        tvHeroWhen.text = "${dayWord(t)} · tra ${duration(t - now)}" + if (a.label.isNotBlank()) " · ${a.label}" else ""
+        tvHeroWhen.text = "${dayWord(t)} · tra ${duration(t - now)}"
 
         tvHeroRain.visibility = View.VISIBLE
         tvHeroRain.text = when {
@@ -191,6 +221,7 @@ class MainActivity : AppCompatActivity() {
         tvEmpty.visibility = if (alarms.isEmpty()) View.VISIBLE else View.GONE
         val inflater = LayoutInflater.from(this)
         for (a in alarms) {
+            if (a.id == heroAlarmId) continue // già in grande in cima
             val v = inflater.inflate(R.layout.item_alarm, alarmList, false)
             val st = p.state(a.id)
             v.findViewById<TextView>(R.id.tvTime).text = a.timeText
@@ -228,19 +259,23 @@ class MainActivity : AppCompatActivity() {
             v.alpha = if (a.enabled) 1f else 0.5f
             v.findViewById<MaterialSwitch>(R.id.swEnabled).apply {
                 isChecked = a.enabled
-                setOnCheckedChangeListener { _, checked ->
-                    a.enabled = checked
-                    if (checked) p.state(a.id).handledOccurrence = 0
-                    p.saveAlarm(a)
-                    Scheduler.reschedule(this@MainActivity, a.id)
-                    alarmList.post { renderAll() }
-                }
+                setOnCheckedChangeListener { _, checked -> setAlarmEnabled(a, checked) }
             }
-            v.setOnClickListener {
-                startActivity(Intent(this, EditAlarmActivity::class.java).putExtra(EditAlarmActivity.EXTRA_ID, a.id))
-            }
+            v.setOnClickListener { openAlarm(a.id) }
             alarmList.addView(v)
         }
+    }
+
+    private fun setAlarmEnabled(a: Alarm, enabled: Boolean) {
+        a.enabled = enabled
+        if (enabled) p.state(a.id).handledOccurrence = 0
+        p.saveAlarm(a)
+        Scheduler.reschedule(this, a.id)
+        alarmList.post { renderAll() }
+    }
+
+    private fun openAlarm(id: Int) {
+        startActivity(Intent(this, EditAlarmActivity::class.java).putExtra(EditAlarmActivity.EXTRA_ID, id))
     }
 
     /** Sette pallini L M M G V S D, pieni per i giorni attivi. */

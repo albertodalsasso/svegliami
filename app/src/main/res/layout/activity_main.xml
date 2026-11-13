@@ -67,22 +67,66 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Prossima sveglia -->
+            <!-- Sveglie: titolo con il pulsante per aggiungerne una -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/Svegliami.Title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Sveglie" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAdd"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nuova"
+                    android:textColor="@color/on_primary"
+                    app:backgroundTint="@color/primary"
+                    app:icon="@drawable/ic_add"
+                    app:iconTint="@color/on_primary" />
+            </LinearLayout>
+
+            <!-- Prima voce dell'elenco: la prossima sveglia, in grande -->
             <LinearLayout
                 android:id="@+id/hero"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/bg_hero_night"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
                 android:orientation="vertical"
                 android:padding="24dp">
 
-                <TextView
-                    style="@style/Svegliami.Overline"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Prossima sveglia"
-                    android:textColor="#CCFFFFFF" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvHeroTitle"
+                        style="@style/Svegliami.Overline"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Prossima sveglia"
+                        android:textColor="#CCFFFFFF" />
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/swHero"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvHeroTime"
@@ -99,6 +143,13 @@
                     android:layout_height="wrap_content"
                     android:textColor="#DDFFFFFF"
                     android:textSize="16sp" />
+
+                <LinearLayout
+                    android:id="@+id/heroDays"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -122,33 +173,6 @@
                         android:background="@drawable/bg_hero_chip"
                         android:textColor="#FFFFFF" />
                 </LinearLayout>
-            </LinearLayout>
-
-            <!-- Sveglie: titolo con il pulsante per aggiungerne una -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/Svegliami.Title"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Sveglie" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnAdd"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Nuova"
-                    android:textColor="@color/on_primary"
-                    app:backgroundTint="@color/primary"
-                    app:icon="@drawable/ic_add"
-                    app:iconTint="@color/on_primary" />
             </LinearLayout>
 
             <LinearLayout
