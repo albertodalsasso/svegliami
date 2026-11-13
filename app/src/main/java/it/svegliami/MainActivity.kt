@@ -223,7 +223,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun duration(ms: Long): String {
         val min = ((ms + 59_999) / 60_000).coerceAtLeast(0)
-        return if (min >= 60) "${min / 60} h ${min % 60} min" else "$min min"
+        return when {
+            min >= 24 * 60 -> "${min / (24 * 60)} g ${min % (24 * 60) / 60} h"
+            min >= 60 -> "${min / 60} h ${min % 60} min"
+            else -> "$min min"
+        }
     }
 
     // ---------- elenco sveglie ----------

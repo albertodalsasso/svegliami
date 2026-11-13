@@ -17,7 +17,7 @@
             android:paddingStart="20dp"
             android:paddingTop="16dp"
             android:paddingEnd="20dp"
-            android:paddingBottom="104dp">
+            android:paddingBottom="176dp">
 
             <!-- Intestazione -->
             <TextView
@@ -228,7 +228,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:text="Insights  →"
+                    android:text="Statistiche  →"
                     android:textColor="@color/on_tertiary_container" />
             </LinearLayout>
 
@@ -318,8 +318,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
-        android:layout_marginBottom="84dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="96dp"
         android:text="Nuova sveglia"
         app:backgroundTint="@color/primary"
         app:icon="@drawable/ic_add"
