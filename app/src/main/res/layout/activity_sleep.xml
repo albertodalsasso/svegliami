@@ -16,7 +16,8 @@
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -37,6 +38,71 @@
                 style="@style/Svegliami.Body"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/scoreCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="24dp"
+                app:strokeColor="@color/outline"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+
+                    <FrameLayout
+                        android:layout_width="76dp"
+                        android:layout_height="76dp">
+
+                        <com.google.android.material.progressindicator.CircularProgressIndicator
+                            android:id="@+id/scoreProgress"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            app:indicatorColor="@color/tertiary"
+                            app:indicatorInset="0dp"
+                            app:indicatorSize="72dp"
+                            app:trackColor="@color/outline"
+                            app:trackThickness="5dp" />
+
+                        <TextView
+                            android:id="@+id/tvScore"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:textColor="@color/on_surface"
+                            android:textSize="24sp"
+                            android:fontFamily="sans-serif-medium" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="18dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/Svegliami.Overline"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Punteggio del sonno" />
+
+                        <TextView
+                            android:id="@+id/tvScoreExplanation"
+                            style="@style/Svegliami.Body"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Numeri principali -->
             <LinearLayout
@@ -134,4 +200,14 @@
                 android:textSize="12sp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/surface"
+        app:itemIconTint="@color/nav_item_tint"
+        app:itemTextColor="@color/nav_item_tint"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/menu_bottom_nav" />
 </LinearLayout>

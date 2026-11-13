@@ -26,6 +26,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import it.svegliami.storage.SleepRoomRepository
 import kotlin.math.log10
 import kotlin.math.sqrt
 
@@ -74,13 +75,17 @@ class SleepService : Service(), SensorEventListener {
 
     private var startTime = 0L
     private val scores = mutableListOf<Float>()
+    private val movementScores = mutableListOf<Float?>()
+    private val soundScores = mutableListOf<Float?>()
     private var samples = 0
     private var moving = 0
     private var last: FloatArray? = null
     private var smartWakeAt = 0L
 
     // Modalità microfono: solo il livello (dB) di ogni blocco da 100 ms, mai l'audio.
+    private var trackingMode = SleepTrackingMode.MATTRESS
     private var micMode = false
+    private var accelMode = false
     @Volatile private var recording = false
     private val micLevels = ArrayList<Float>()   // protetti dal lock di micLevels
     private val micLowRatios = ArrayList<Float>()
@@ -101,7 +106,14 @@ class SleepService : Service(), SensorEventListener {
             finish()
             return START_NOT_STICKY
         }
-        if (instance == null) micMode = Prefs(this).sleepUseMic && hasMicPermission(this)
+        if (instance == null) {
+            val chosen = Prefs(this).sleepTrackingMode
+            micMode = chosen.usesMicrophone && hasMicPermission(this)
+            // Comodino senza permesso del microfono: si misura con l'accelerometro invece di
+            // non misurare niente (la notte risulterebbe tutta "sonno profondo").
+            trackingMode = if (chosen.usesMicrophone && !micMode) SleepTrackingMode.MATTRESS else chosen
+            accelMode = !micMode
+        }
         goForeground()
         if (instance == null) begin()
         return START_NOT_STICKY
@@ -119,10 +131,11 @@ class SleepService : Service(), SensorEventListener {
         val notif: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_alarm)
             .setContentTitle("🌙 Monitoraggio del sonno attivo")
-            .setContentText(
-                if (micMode) "Telefono sul comodino: misuro solo il volume, nessuna registrazione"
-                else "Lascia il telefono sul materasso, vicino al cuscino",
-            )
+            .setContentText(when {
+                micMode -> "Telefono sul comodino: elaborazione audio, nessuna registrazione"
+                trackingMode.usesMicrophone -> "Microfono non disponibile: misuro i movimenti con l'accelerometro"
+                else -> "Lascia il telefono sul materasso, vicino al cuscino"
+            })
             .setOngoing(true)
             .setContentIntent(open)
             .addAction(0, "Ferma", stop)
@@ -136,6 +149,7 @@ class SleepService : Service(), SensorEventListener {
         instance = this
         startTime = System.currentTimeMillis()
         scores.clear()
+        movementScores.clear(); soundScores.clear()
         samples = 0; moving = 0; last = null; smartWakeAt = 0
 
         wakeLock = getSystemService(PowerManager::class.java)
@@ -144,7 +158,8 @@ class SleepService : Service(), SensorEventListener {
         recentFloors.clear()
         synchronized(micLevels) { micLevels.clear(); micLowRatios.clear() }
         snore.clear()
-        if (micMode) startMic() else startAccelerometer()
+        if (accelMode) startAccelerometer()
+        if (micMode) startMic()
         handler.postDelayed(tick, 60_000)
         handler.postDelayed({ finish() }, MAX_DURATION_MS)
     }
@@ -152,7 +167,7 @@ class SleepService : Service(), SensorEventListener {
     private fun startAccelerometer() {
         sensorManager = getSystemService(SensorManager::class.java)
         sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let {
-            sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+            accelMode = sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_UI) == true
         }
     }
 
@@ -176,16 +191,20 @@ class SleepService : Service(), SensorEventListener {
         Thread({
             val rec = createRecorder()
             if (rec == null) {
-                // Microfono non disponibile: passa all'accelerometro.
-                handler.post { if (instance === this) { micMode = false; startAccelerometer() } }
+                handler.post { microphoneUnavailable() }
                 return@Thread
             }
             val buf = ShortArray(CHUNK)
             var low = 0f
+            var failed = false
             try {
                 rec.startRecording()
                 while (recording) {
                     val n = rec.read(buf, 0, buf.size)
+                    if (n < 0) {
+                        failed = true
+                        break
+                    }
                     if (n <= 0) continue
                     var sum = 0.0
                     var lowSum = 0.0
@@ -200,23 +219,39 @@ class SleepService : Service(), SensorEventListener {
                     synchronized(micLevels) { micLevels.add(db); micLowRatios.add(ratio) }
                 }
             } catch (_: Exception) {
+                failed = true
             } finally {
                 runCatching { rec.stop() }
                 rec.release()
             }
+            if (failed) handler.post { microphoneUnavailable() }
         }, "svegliami-mic").start()
     }
 
+    /**
+     * Il microfono si è fermato: da qui in poi misura l'accelerometro. La sessione resta
+     * "comodino", così il russare e i punteggi audio dei minuti precedenti non vanno persi.
+     */
+    private fun microphoneUnavailable() {
+        if (instance !== this) return
+        micMode = false
+        if (!accelMode) {
+            accelMode = true
+            startAccelerometer()
+        }
+        goForeground()
+    }
+
     /** Punteggio del minuto dal microfono, rispetto al rumore di fondo degli ultimi minuti. */
-    private fun micMinute(): MicMinute {
+    private fun micMinute(): Pair<MicMinute, Float> {
         val (levels, ratios) = synchronized(micLevels) {
             (ArrayList(micLevels) to ArrayList(micLowRatios)).also { micLevels.clear(); micLowRatios.clear() }
         }
-        if (levels.isEmpty()) return MicMinute(0f, false)
+        if (levels.isEmpty()) return MicMinute(0f, false) to 0f
         recentFloors.addLast(SleepAnalyzer.percentile(levels, 0.1f))
         while (recentFloors.size > FLOOR_MINUTES) recentFloors.removeFirst()
         val baseline = SleepAnalyzer.percentile(recentFloors.toList(), 0.5f)
-        return SleepAnalyzer.analyzeMicMinute(levels, ratios, baseline)
+        return SleepAnalyzer.analyzeMicMinute(levels, ratios, baseline) to (levels.size / 600f).coerceIn(0f, 1f)
     }
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -232,15 +267,15 @@ class SleepService : Service(), SensorEventListener {
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     private fun onMinute() {
-        val score: Float
-        if (micMode) {
-            val m = micMinute()
-            score = m.score
-            snore += m.snoring
-        } else {
-            score = if (samples == 0) 0f else moving * 100f / samples
-            snore += false
-        }
+        val accel = if (accelMode && samples > 0)
+            moving * 100f / samples
+        else null
+        val mic = if (micMode) micMinute() else null
+        // Un solo sensore attivo per volta: il microfono, oppure l'accelerometro (scelto o di ripiego).
+        val score = if (mic != null) mic.first.score else accel ?: 0f
+        movementScores += accel
+        soundScores += mic?.first?.score
+        snore += mic?.first?.snoring ?: false
         scores += score
         samples = 0; moving = 0
         if (scores.size % 10 == 0) persist() // salvataggio periodico, nel caso il processo venga chiuso
@@ -266,7 +301,19 @@ class SleepService : Service(), SensorEventListener {
 
     private fun persist() {
         if (scores.size < 10) return // sessioni di pochi minuti: non le salva
-        SleepStore.upsert(this, SleepSession(startTime, System.currentTimeMillis(), scores.toList(), smartWakeAt, micMode, snore.toList()))
+        val session = SleepSession(
+            start = startTime,
+            end = System.currentTimeMillis(),
+            scores = scores.toList(),
+            smartWakeAt = smartWakeAt,
+            mic = trackingMode.usesMicrophone,
+            snore = snore.toList(),
+            trackingMode = trackingMode,
+            movementScores = movementScores.toList(),
+            soundScores = soundScores.toList(),
+        )
+        SleepStore.upsert(this, session)
+        SleepRoomRepository.mirror(this, session)
     }
 
     private fun finish() {

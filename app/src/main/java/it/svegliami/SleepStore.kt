@@ -16,8 +16,18 @@ data class SleepSession(
     val mic: Boolean = false,
     /** Per ogni minuto: russare rilevato (solo in modalità microfono). */
     val snore: List<Boolean> = emptyList(),
+    val trackingMode: SleepTrackingMode = if (mic) SleepTrackingMode.NIGHTSTAND else SleepTrackingMode.MATTRESS,
+    val movementScores: List<Float?> = emptyList(),
+    val soundScores: List<Float?> = emptyList(),
 ) {
     val snoreMinutes get() = snore.count { it }
+}
+
+enum class SleepTrackingMode {
+    /** Comodino (microfono) oppure materasso (accelerometro). */
+    NIGHTSTAND, MATTRESS;
+
+    val usesMicrophone get() = this == NIGHTSTAND
 }
 
 /** Storico delle notti, in un file JSON nella memoria privata dell'app. */
@@ -33,13 +43,20 @@ object SleepStore {
         (0 until arr.length()).map { i ->
             val o = arr.getJSONObject(i)
             val s = o.getJSONArray("scores")
+            val movement = o.optJSONArray("movementScores")
+            val sound = o.optJSONArray("soundScores")
             SleepSession(
                 start = o.getLong("start"),
                 end = o.getLong("end"),
                 scores = (0 until s.length()).map { s.getDouble(it).toFloat() },
                 smartWakeAt = o.optLong("smartWakeAt", 0),
                 mic = o.optBoolean("mic", false),
+                trackingMode = runCatching {
+                    SleepTrackingMode.valueOf(o.optString("trackingMode", if (o.optBoolean("mic", false)) "NIGHTSTAND" else "MATTRESS"))
+                }.getOrDefault(if (o.optBoolean("mic", false)) SleepTrackingMode.NIGHTSTAND else SleepTrackingMode.MATTRESS),
                 snore = o.optString("snore", "").map { it == '1' },
+                movementScores = movement?.let { a -> (0 until a.length()).map { i -> if (a.isNull(i)) null else a.optDouble(i).toFloat() } }.orEmpty(),
+                soundScores = sound?.let { a -> (0 until a.length()).map { i -> if (a.isNull(i)) null else a.optDouble(i).toFloat() } }.orEmpty(),
             )
         }.sortedByDescending { it.start }
     }.getOrDefault(emptyList())
@@ -51,8 +68,11 @@ object SleepStore {
             .sortedByDescending { it.start }.take(MAX_SESSIONS)
         val arr = JSONArray(list.map { s ->
             JSONObject().put("start", s.start).put("end", s.end).put("smartWakeAt", s.smartWakeAt).put("mic", s.mic)
+                .put("trackingMode", s.trackingMode.name)
                 .put("snore", s.snore.joinToString("") { if (it) "1" else "0" })
                 .put("scores", JSONArray(s.scores.map { Math.round(it * 10) / 10.0 }))
+                .put("movementScores", JSONArray(s.movementScores.map { it?.toDouble() ?: JSONObject.NULL }))
+                .put("soundScores", JSONArray(s.soundScores.map { it?.toDouble() ?: JSONObject.NULL }))
         })
         file(ctx).writeText(arr.toString())
     }

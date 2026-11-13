@@ -1,11 +1,9 @@
 package it.svegliami
 
 import android.Manifest
-import android.app.AlertDialog
 import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -17,8 +15,6 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
-import android.widget.CompoundButton
-import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -27,6 +23,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -59,10 +56,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvSleep: TextView
     private lateinit var btnSleep: Button
     private lateinit var toggleSleepMode: MaterialButtonToggleGroup
-    private lateinit var tvPlace: TextView
-    private lateinit var btnGps: Button
-    private lateinit var swAutoLoc: CompoundButton
-    private lateinit var etCity: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,10 +77,7 @@ class MainActivity : AppCompatActivity() {
         tvSleep = findViewById(R.id.tvSleep)
         btnSleep = findViewById(R.id.btnSleep)
         toggleSleepMode = findViewById(R.id.toggleSleepMode)
-        tvPlace = findViewById(R.id.tvPlace)
-        btnGps = findViewById(R.id.btnGps)
-        swAutoLoc = findViewById<MaterialSwitch>(R.id.swAutoLoc)
-        etCity = findViewById(R.id.etCity)
+        NavigationUi.bind(this, findViewById<BottomNavigationView>(R.id.bottomNavigation), R.id.navHome)
 
         findViewById<View>(R.id.btnAdd).setOnClickListener {
             startActivity(Intent(this, EditAlarmActivity::class.java))
@@ -96,30 +86,18 @@ class MainActivity : AppCompatActivity() {
 
         // Sonno
         btnSleep.setOnClickListener { toggleSleep() }
-        findViewById<Button>(R.id.btnSleepHistory).setOnClickListener {
-            startActivity(Intent(this, SleepActivity::class.java))
-        }
-        toggleSleepMode.check(if (p.sleepUseMic) R.id.btnModeNightstand else R.id.btnModeBed)
+        toggleSleepMode.check(when (p.sleepTrackingMode) {
+            SleepTrackingMode.NIGHTSTAND -> R.id.btnModeNightstand
+            SleepTrackingMode.MATTRESS -> R.id.btnModeBed
+        })
         toggleSleepMode.addOnButtonCheckedListener { _, id, checked ->
             if (checked) {
-                p.sleepUseMic = id == R.id.btnModeNightstand
+                p.sleepTrackingMode = when (id) {
+                    R.id.btnModeNightstand -> SleepTrackingMode.NIGHTSTAND
+                    else -> SleepTrackingMode.MATTRESS
+                }
                 renderSleep()
             }
-        }
-
-        // Località
-        updatePlaceLabel()
-        findViewById<Button>(R.id.btnSearch).setOnClickListener { searchCity() }
-        btnGps.setOnClickListener {
-            if (LocationHelper.hasForeground(this)) locateNow(manual = true)
-            else requestPermissions(FOREGROUND_LOC, REQ_LOC_GPS)
-        }
-        swAutoLoc.isChecked = p.autoLocation
-        swAutoLoc.setOnCheckedChangeListener { _, checked ->
-            p.autoLocation = checked
-            if (checked) ensureAutoLocationPermissions()
-            Scheduler.rescheduleAll(this)
-            renderAll()
         }
     }
 
@@ -127,10 +105,15 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         tvToday.text = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN).format(LocalDate.now())
         renderAll()
+        val navigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        // markSelected non fa scattare i listener (che riporterebbero in cima la pagina a ogni ritorno).
+        NavigationUi.markSelected(navigation, R.id.navHome)
         handler.post(ticker)
         // Con l'aggiornamento automatico attivo, ogni apertura dell'app rileva la posizione fresca.
-        if (p.autoLocation && LocationHelper.hasForeground(this)) locateNow(manual = false)
+        if (p.autoLocation && LocationHelper.hasForeground(this)) refreshLocation()
     }
+
+    fun scrollToTop() = findViewById<androidx.core.widget.NestedScrollView>(R.id.mainScroll).smoothScrollTo(0, 0)
 
     override fun onPause() {
         handler.removeCallbacks(ticker)
@@ -193,7 +176,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun duration(ms: Long): String {
         val min = ((ms + 59_999) / 60_000).coerceAtLeast(0)
-        return if (min >= 60) "${min / 60} h ${min % 60} min" else "$min min"
+        return when {
+            min >= 24 * 60 -> "${min / (24 * 60)} g ${min % (24 * 60) / 60} h"
+            min >= 60 -> "${min / 60} h ${min % 60} min"
+            else -> "$min min"
+        }
     }
 
     // ---------- elenco sveglie ----------
@@ -294,7 +281,10 @@ class MainActivity : AppCompatActivity() {
                 "Si ferma da solo quando suona la sveglia."
             btnSleep.text = "Ferma il monitoraggio"
         } else {
-            val where = if (p.sleepUseMic) "sul comodino, con il microfono verso il letto" else "sul materasso, vicino al cuscino"
+            val where = when (p.sleepTrackingMode) {
+                SleepTrackingMode.NIGHTSTAND -> "sul comodino, con il microfono verso il letto"
+                SleepTrackingMode.MATTRESS -> "sul materasso, vicino al cuscino"
+            }
             tvSleep.text = if (p.alarms.none { it.enabled && it.smartWindowMin > 0 }) {
                 "Registra la tua notte. Attiva la sveglia intelligente in una sveglia per svegliarti nel sonno leggero."
             } else {
@@ -310,7 +300,7 @@ class MainActivity : AppCompatActivity() {
                 SleepService.stop()
                 btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
             }
-            p.sleepUseMic && !SleepService.hasMicPermission(this) ->
+            p.sleepTrackingMode.usesMicrophone && !SleepService.hasMicPermission(this) ->
                 requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC)
             else -> startSleep()
         }
@@ -318,81 +308,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun startSleep() {
         SleepService.start(this)
-        val where = if (p.sleepUseMic) "sul comodino, vicino al letto" else "sul materasso, vicino al cuscino"
+        val where = when (p.sleepTrackingMode) {
+            SleepTrackingMode.NIGHTSTAND -> "sul comodino, vicino al letto"
+            SleepTrackingMode.MATTRESS -> "sul materasso, vicino al cuscino"
+        }
         Toast.makeText(this, "Metti il telefono $where. Buonanotte!", Toast.LENGTH_LONG).show()
         btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
     }
 
     // ---------- località ----------
 
-    private fun updatePlaceLabel() {
-        tvPlace.text = if (p.hasLocation) "📍 ${p.placeName}" else "📍 Nessuna località impostata"
-    }
-
-    private fun onLocationChanged() {
-        updatePlaceLabel()
-        Scheduler.rescheduleAll(this)
-        renderAll()
-    }
-
-    private fun searchCity() {
-        val q = etCity.text.toString()
-        if (q.isBlank()) return
-        io.execute {
-            val result = runCatching { WeatherClient.searchPlaces(q) }
-            runOnUiThread {
-                if (isFinishing || isDestroyed) return@runOnUiThread
-                result.onFailure { Toast.makeText(this, "Errore di rete: ${it.message}", Toast.LENGTH_LONG).show() }
-                result.onSuccess { places ->
-                    if (places.isEmpty()) {
-                        Toast.makeText(this, "Nessun risultato", Toast.LENGTH_SHORT).show()
-                    } else {
-                        AlertDialog.Builder(this)
-                            .setTitle("Scegli la località")
-                            .setItems(places.map { it.name }.toTypedArray()) { _, i ->
-                                val pl = places[i]
-                                p.placeName = pl.name; p.lat = pl.lat; p.lon = pl.lon
-                                p.locationTime = 0
-                                swAutoLoc.isChecked = false // località scelta a mano: niente aggiornamento GPS
-                                onLocationChanged()
-                            }
-                            .show()
-                    }
+    /** Aggiornamento automatico a ogni apertura (si imposta in Opzioni): in silenzio, senza messaggi. */
+    private fun refreshLocation() {
+        LocationHelper.getCurrent(this) { loc ->
+            if (loc == null || isFinishing || isDestroyed) return@getCurrent
+            io.execute {
+                LocationHelper.apply(this, p, loc)
+                runOnUiThread {
+                    if (isFinishing || isDestroyed) return@runOnUiThread
+                    Scheduler.rescheduleAll(this)
+                    renderAll()
                 }
             }
-        }
-    }
-
-    private fun locateNow(manual: Boolean) {
-        if (manual) {
-            btnGps.isEnabled = false
-            btnGps.text = "Ricerca posizione…"
-        }
-        LocationHelper.getCurrent(this) { loc -> onLocation(loc, manual) }
-    }
-
-    private fun onLocation(loc: Location?, manual: Boolean) {
-        if (isFinishing || isDestroyed) return
-        btnGps.isEnabled = true
-        btnGps.text = "📍 Usa la mia posizione (GPS)"
-        if (loc == null) {
-            if (manual) Toast.makeText(this, "Posizione non disponibile: attiva la localizzazione e riprova", Toast.LENGTH_LONG).show()
-            return
-        }
-        io.execute {
-            LocationHelper.apply(this, p, loc, force = manual)
-            runOnUiThread {
-                if (isFinishing || isDestroyed) return@runOnUiThread
-                onLocationChanged()
-                if (manual) Toast.makeText(this, "Posizione impostata: ${p.placeName}", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun ensureAutoLocationPermissions() {
-        when {
-            !LocationHelper.hasForeground(this) -> requestPermissions(FOREGROUND_LOC, REQ_LOC_AUTO)
-            else -> locateNow(manual = false)
         }
     }
 
@@ -422,6 +359,11 @@ class MainActivity : AppCompatActivity() {
                 requestPermissions(arrayOf(Ringtones.storagePermission()), REQ_AUDIO)
             }
         }
+        if (!p.hasLocation && !p.autoLocation) {
+            list += Issue("Località per il meteo non impostata: la sveglia non si anticipa se piove") {
+                startActivity(Intent(this, SettingsActivity::class.java))
+            }
+        }
         if (!getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)) {
             list += Issue("Ottimizzazione batteria attiva: il controllo meteo notturno potrebbe non avere rete") {
                 @Suppress("BatteryLife")
@@ -441,12 +383,6 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         val ok = grantResults.any { it == PackageManager.PERMISSION_GRANTED }
         when (requestCode) {
-            REQ_LOC_GPS ->
-                if (ok) locateNow(manual = true)
-                else Toast.makeText(this, "Permesso di posizione negato", Toast.LENGTH_SHORT).show()
-            REQ_LOC_AUTO ->
-                if (ok) ensureAutoLocationPermissions()
-                else swAutoLoc.isChecked = false
             REQ_MIC ->
                 if (ok) startSleep()
                 else Toast.makeText(this, "Senza microfono usa la modalità «Materasso»", Toast.LENGTH_LONG).show()
@@ -461,13 +397,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val REQ_NOTIF = 1
-        private const val REQ_LOC_GPS = 2
-        private const val REQ_LOC_AUTO = 3
         private const val REQ_AUDIO = 5
         private const val REQ_MIC = 6
-        private val FOREGROUND_LOC = arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-        )
     }
 }

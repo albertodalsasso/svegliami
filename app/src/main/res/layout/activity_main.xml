@@ -6,6 +6,7 @@
     android:background="@color/night_bg">
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/mainScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -123,13 +124,32 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Sveglie -->
-            <TextView
-                style="@style/Svegliami.Title"
-                android:layout_width="wrap_content"
+            <!-- Sveglie: titolo con il pulsante per aggiungerne una -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:text="Sveglie" />
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/Svegliami.Title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Sveglie" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAdd"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nuova"
+                    android:textColor="@color/on_primary"
+                    app:backgroundTint="@color/primary"
+                    app:icon="@drawable/ic_add"
+                    app:iconTint="@color/on_primary" />
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/alarmList"
@@ -143,7 +163,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingVertical="16dp"
-                android:text="Nessuna sveglia: tocca «Nuova sveglia» per crearne una." />
+                android:text="Nessuna sveglia: tocca «Nuova» per crearne una." />
 
             <!-- Sonno -->
             <TextView
@@ -203,95 +223,20 @@
                     android:textColor="@color/on_tertiary"
                     android:textSize="16sp" />
 
-                <Button
-                    android:id="@+id/btnSleepHistory"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:text="Storico del sonno  →"
-                    android:textColor="@color/on_tertiary_container" />
             </LinearLayout>
 
-            <!-- Località -->
-            <TextView
-                style="@style/Svegliami.Title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:text="Località per il meteo" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <TextView
-                        android:id="@+id/tvPlace"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/on_surface"
-                        android:textSize="18sp" />
-
-                    <Button
-                        android:id="@+id/btnGps"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="📍 Usa la mia posizione (GPS)" />
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/swAutoLoc"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Aggiorna a ogni apertura dell'app (utile in viaggio)"
-                        android:textColor="@color/on_surface_variant" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <EditText
-                            android:id="@+id/etCity"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:hint="Oppure cerca una città"
-                            android:inputType="textCapWords"
-                            android:textColor="@color/on_surface"
-                            android:textColorHint="@color/on_surface_variant" />
-
-                        <Button
-                            android:id="@+id/btnSearch"
-                            style="@style/Widget.Material3.Button.TextButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Cerca" />
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/btnAdd"
-        android:layout_width="wrap_content"
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
-        android:text="Nuova sveglia"
-        app:backgroundTint="@color/primary"
-        app:icon="@drawable/ic_add"
-        app:iconTint="@color/on_primary"
-        android:textColor="@color/on_primary" />
+        android:layout_gravity="bottom"
+        android:backgroundTint="@color/surface"
+        app:itemIconTint="@color/nav_item_tint"
+        app:itemTextColor="@color/nav_item_tint"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/menu_bottom_nav" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -165,8 +165,15 @@ class Prefs(ctx: Context) {
 
     /** true = telefono sul comodino (microfono), false = sul materasso (accelerometro). */
     var sleepUseMic: Boolean
-        get() = sp.getBoolean("sleepUseMic", false)
-        set(v) = sp.edit().putBoolean("sleepUseMic", v).apply()
+        get() = sleepTrackingMode == SleepTrackingMode.NIGHTSTAND
+        set(v) { sleepTrackingMode = if (v) SleepTrackingMode.NIGHTSTAND else SleepTrackingMode.MATTRESS }
+
+    /** Nuova preferenza; se assente, conserva la scelta storica a due modalità. */
+    var sleepTrackingMode: SleepTrackingMode
+        get() = sp.getString("sleepTrackingMode", null)
+            ?.let { runCatching { SleepTrackingMode.valueOf(it) }.getOrNull() }
+            ?: if (sp.getBoolean("sleepUseMic", false)) SleepTrackingMode.NIGHTSTAND else SleepTrackingMode.MATTRESS
+        set(v) = sp.edit().putString("sleepTrackingMode", v.name).putBoolean("sleepUseMic", v == SleepTrackingMode.NIGHTSTAND).apply()
 
     // --- cache previsioni ---
 

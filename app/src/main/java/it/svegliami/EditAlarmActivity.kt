@@ -169,7 +169,7 @@ class EditAlarmActivity : AppCompatActivity() {
     /** Mostra subito cosa deciderebbe l'app per la prossima occorrenza di questa sveglia. */
     private fun testNow() {
         if (!p.hasLocation) {
-            Toast.makeText(this, "Imposta prima la località nella schermata principale", Toast.LENGTH_LONG).show(); return
+            Toast.makeText(this, "Imposta prima la località in Opzioni", Toast.LENGTH_LONG).show(); return
         }
         val a = formAlarm()
         val occ = Scheduler.nextOccurrence(a, 0, System.currentTimeMillis()) ?: return
