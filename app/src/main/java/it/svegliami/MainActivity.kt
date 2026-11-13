@@ -186,12 +186,22 @@ class MainActivity : AppCompatActivity() {
 
         tvHeroRain.visibility = View.VISIBLE
         tvHeroRain.text = when {
-            rainy -> "☔  Anticipata per pioggia (era alle ${Scheduler.fmtTime(st.currentOccurrence)})"
-            p.hasLocation || p.autoLocation -> "☔  Se piove: alle ${Scheduler.fmtTime(st.currentOccurrence - a.advanceMin * 60_000L)}"
+            rainy -> "☔  Anticipata: piove${shortPlace()?.let { " a $it" } ?: ""} (era alle ${Scheduler.fmtTime(st.currentOccurrence)})"
+            p.hasLocation || p.autoLocation -> "☔  Se piove${shortPlace()?.let { " a $it" } ?: ""}: alle ${Scheduler.fmtTime(st.currentOccurrence - a.advanceMin * 60_000L)}"
             else -> "☁  Meteo non controllato: imposta la località"
         }
         tvHeroSmart.visibility = if (a.smartWindowMin > 0) View.VISIBLE else View.GONE
         tvHeroSmart.text = "🌙  Sveglia intelligente dalle ${Scheduler.fmtTime(t - a.smartWindowMin * 60_000L)}"
+    }
+
+    /**
+     * Nome breve della località per il meteo: "Padova, Veneto (GPS)" diventa "Padova".
+     * Null se manca o se è solo una coppia di coordinate.
+     */
+    private fun shortPlace(): String? {
+        if (!p.hasLocation) return null
+        val name = p.placeName.removeSuffix(" (GPS)").substringBefore(",").trim()
+        return name.takeIf { it.isNotEmpty() && it.any(Char::isLetter) }
     }
 
     private fun dayWord(ms: Long): String {
