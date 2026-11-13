@@ -100,7 +100,7 @@ class SleepActivity : AppCompatActivity() {
                 bedtimeEpochMillis = s.start,
                 snoringMinutes = if (s.mic && s.snore.isNotEmpty()) s.snoreMinutes else null,
             ),
-            previousBedtimes = sessions.filter { it.start != s.start }.take(13).map { it.start },
+            previousBedtimes = sessions.filter { it.start < s.start }.take(13).map { it.start },
         )
         findViewById<CircularProgressIndicator>(R.id.scoreProgress).setProgressCompat(score.score, true)
         findViewById<TextView>(R.id.tvScore).text = score.score.toString()
@@ -119,7 +119,6 @@ class SleepActivity : AppCompatActivity() {
             append(when (s.trackingMode) {
                 SleepTrackingMode.NIGHTSTAND -> "🎙 Telefono sul comodino (microfono)"
                 SleepTrackingMode.MATTRESS -> "🛏 Telefono sul materasso (accelerometro)"
-                SleepTrackingMode.COMBINED -> "🎙🛏 Microfono e accelerometro (combinata)"
             })
             if (s.smartWakeAt > 0) append("\n🌙 Sveglia intelligente alle ${Scheduler.fmtTime(s.smartWakeAt)} (linea rosa)")
         }

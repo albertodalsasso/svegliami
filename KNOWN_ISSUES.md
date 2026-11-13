@@ -10,4 +10,3 @@
 - Il meteo cambia l'anticipo in base alle regole originali; profili bici/bus/auto/piedi e scelta automatica del mezzo non sono ancora implementati.
 - Health Connect, autenticazione, sincronizzazione e backup cloud non sono implementati.
 - Nessun test reale su più telefoni, versioni Android, Doze, riavvio, battery saver o permessi revocati è documentato.
-- È presente uno stato legacy `COMBINED` nei modelli/servizio e nei record storici. La UI non lo offre; la preferenza salvata viene normalizzata a `MATTRESS` per evitare un cambio distruttivo dei dati storici.

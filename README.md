@@ -23,7 +23,6 @@ Senza smartwatch, scegli una delle due modalità:
 
 Le fasi sono stimate dai movimenti (attigrafia): sono un'indicazione, non una misura clinica.
 
-Le sessioni storiche create con la modalità combinata restano leggibili. Le nuove preferenze selezionabili sono comodino oppure materasso.
 
 Lo storico mostra anche uno **Sleep Score sperimentale** da 0 a 100. Il punteggio spiega le componenti misurate e non penalizza i sensori non disponibili; la regolarità usa per ora l'orario di avvio del monitoraggio come proxy. Non è una valutazione medica. Il diario consente di annotare umore, caffeina, attività, stress, pasto e note per ogni sessione.
 

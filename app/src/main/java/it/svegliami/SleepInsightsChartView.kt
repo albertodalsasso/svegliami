@@ -66,9 +66,11 @@ class SleepInsightsChartView @JvmOverloads constructor(
         if (kind == Kind.HOURS) {
             val gap = 4f * density
             val count = values.size
-            val barWidth = max(4f * density, ((right - left + gap) / count) - gap)
+            // Ogni barra sta al centro della sua fascia: la prima e l'ultima non escono dall'area.
+            val slot = (right - left) / count
+            val barWidth = max(4f * density, slot - gap).coerceAtMost(slot)
             values.forEachIndexed { index, value ->
-                val center = if (count == 1) (left + right) / 2f else left + index * step
+                val center = left + slot * (index + 0.5f)
                 val barHeight = ((bottom - top) * value.coerceIn(0f, maximum) / maximum)
                 canvas.drawRoundRect(
                     RectF(center - barWidth / 2f, bottom - barHeight, center + barWidth / 2f, bottom),

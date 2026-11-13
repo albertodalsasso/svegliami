@@ -73,3 +73,5 @@ Una fase è completata solo quando compila e i test applicabili passano. Le misu
 La specifica di prodotto successiva restringe la scelta visibile a comodino oppure materasso. Il supporto `COMBINED` rimane nel modello/servizio per leggere preferenze e sessioni legacy; `Prefs.sleepTrackingMode` normalizza la vecchia preferenza a materasso e la nuova UI non offre la combinazione. È stata aggiunta una `SettingsActivity` con selezione persistente del sensore, località meteo corrente e stato esplicito dell'account/audio. La località continua a essere modificata nella sezione Home esistente.
 
 La navigazione a cinque voci è ora instradata alla pagina Impostazioni effettiva; la pagina non implementa account, tema o configurazioni che non esistono ancora. I documenti di progetto aggiornati sono nella root (`ARCHITECTURE.md`, `ROADMAP.md`, `TECHNICAL_AUDIT.md`, `KNOWN_ISSUES.md`, `THIRD_PARTY_LICENSES.md`, `SYNC_ARCHITECTURE.md`).
+
+**Aggiornamento:** la modalità combinata e `SensorFusion` sono state rimosse. Il servizio usa un solo sensore per volta e passa all'accelerometro se il microfono non è disponibile.

@@ -8,6 +8,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
+import androidx.room.Upsert
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
@@ -115,10 +116,13 @@ data class AlarmEntity(
 
 @Dao
 interface SleepDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE) fun putSessions(sessions: List<SleepSessionEntity>)
-    @Insert(onConflict = OnConflictStrategy.REPLACE) fun putSession(session: SleepSessionEntity)
-    @Insert(onConflict = OnConflictStrategy.REPLACE) fun putSamples(samples: List<SleepSampleEntity>)
-    @Insert(onConflict = OnConflictStrategy.REPLACE) fun putEvents(events: List<SleepEventEntity>)
+    // Upsert e non REPLACE: in SQLite REPLACE cancella la riga e la reinserisce, e la cancellazione
+    // eliminerebbe a cascata diario, campioni ed eventi della sessione.
+    @Upsert fun putSession(session: SleepSessionEntity)
+    @Insert fun putSamples(samples: List<SleepSampleEntity>)
+    @Insert fun putEvents(events: List<SleepEventEntity>)
+    @Query("DELETE FROM sleep_samples WHERE sessionId = :sessionId") fun deleteSamples(sessionId: Long)
+    @Query("DELETE FROM sleep_events WHERE sessionId = :sessionId") fun deleteEvents(sessionId: Long)
     @Insert(onConflict = OnConflictStrategy.REPLACE) fun putJournal(entry: SleepJournalEntryEntity)
     @Query("SELECT COUNT(*) FROM sleep_sessions") fun sessionCount(): Int
     @Query("SELECT * FROM sleep_sessions WHERE id = :sessionId LIMIT 1") fun session(sessionId: Long): SleepSessionEntity?

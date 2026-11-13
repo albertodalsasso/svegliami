@@ -24,10 +24,10 @@ data class SleepSession(
 }
 
 enum class SleepTrackingMode {
-    NIGHTSTAND, MATTRESS, COMBINED;
+    /** Comodino (microfono) oppure materasso (accelerometro). */
+    NIGHTSTAND, MATTRESS;
 
-    val usesMicrophone get() = this != MATTRESS
-    val usesAccelerometer get() = this != NIGHTSTAND
+    val usesMicrophone get() = this == NIGHTSTAND
 }
 
 /** Storico delle notti, in un file JSON nella memoria privata dell'app. */

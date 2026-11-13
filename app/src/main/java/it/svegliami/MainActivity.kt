@@ -110,7 +110,6 @@ class MainActivity : AppCompatActivity() {
         toggleSleepMode.check(when (p.sleepTrackingMode) {
             SleepTrackingMode.NIGHTSTAND -> R.id.btnModeNightstand
             SleepTrackingMode.MATTRESS -> R.id.btnModeBed
-            SleepTrackingMode.COMBINED -> R.id.btnModeBed
         })
         toggleSleepMode.addOnButtonCheckedListener { _, id, checked ->
             if (checked) {
@@ -143,12 +142,13 @@ class MainActivity : AppCompatActivity() {
         tvToday.text = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN).format(LocalDate.now())
         renderAll()
         val navigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        // La località sta nella Home: la voce evidenziata resta Home anche quando ci si arriva
+        // da Impostazioni. markSelected non fa scattare i listener (né riapre Impostazioni,
+        // né riporta in cima la pagina a ogni ritorno).
+        NavigationUi.markSelected(navigation, R.id.navHome)
         if (intent.getBooleanExtra(NavigationUi.EXTRA_OPEN_SETTINGS, false)) {
-            navigation.selectedItemId = R.id.navSettings
-            scrollToSettings()
             intent.removeExtra(NavigationUi.EXTRA_OPEN_SETTINGS)
-        } else {
-            navigation.selectedItemId = R.id.navHome
+            scrollToSettings()
         }
         handler.post(ticker)
         // Con l'aggiornamento automatico attivo, ogni apertura dell'app rileva la posizione fresca.
@@ -326,7 +326,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             val where = when (p.sleepTrackingMode) {
                 SleepTrackingMode.NIGHTSTAND -> "sul comodino, con il microfono verso il letto"
-                SleepTrackingMode.COMBINED -> "sul materasso, vicino al cuscino"
                 SleepTrackingMode.MATTRESS -> "sul materasso, vicino al cuscino"
             }
             tvSleep.text = if (p.alarms.none { it.enabled && it.smartWindowMin > 0 }) {
@@ -354,7 +353,6 @@ class MainActivity : AppCompatActivity() {
         SleepService.start(this)
         val where = when (p.sleepTrackingMode) {
             SleepTrackingMode.NIGHTSTAND -> "sul comodino, vicino al letto"
-            SleepTrackingMode.COMBINED -> "sul materasso, vicino al cuscino"
             SleepTrackingMode.MATTRESS -> "sul materasso, vicino al cuscino"
         }
         Toast.makeText(this, "Metti il telefono $where. Buonanotte!", Toast.LENGTH_LONG).show()

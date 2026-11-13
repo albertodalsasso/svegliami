@@ -69,9 +69,13 @@ object SleepRoomRepository {
         prefs.edit().putBoolean(IMPORTED_KEY, true).commit()
     }
 
+    /** Aggiorna la sessione senza toccarne il diario; campioni ed eventi vengono riscritti per intero. */
     private fun writeBundle(db: SleepDatabase, bundle: SleepSessionBundle) {
-        db.sleepDao().putSession(bundle.session)
-        db.sleepDao().putSamples(bundle.samples)
-        db.sleepDao().putEvents(bundle.events)
+        val dao = db.sleepDao()
+        dao.putSession(bundle.session)
+        dao.deleteSamples(bundle.session.id)
+        dao.deleteEvents(bundle.session.id)
+        dao.putSamples(bundle.samples)
+        dao.putEvents(bundle.events)
     }
 }

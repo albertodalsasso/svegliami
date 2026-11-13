@@ -8,7 +8,7 @@ object NavigationUi {
     const val EXTRA_OPEN_SETTINGS = "it.svegliami.OPEN_SETTINGS"
 
     fun bind(activity: Activity, navigation: BottomNavigationView, selectedId: Int) {
-        navigation.selectedItemId = selectedId
+        markSelected(navigation, selectedId)
         navigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navHome -> if (activity is MainActivity) activity.scrollToTop() else launchMain(activity)
@@ -27,13 +27,22 @@ object NavigationUi {
         }
     }
 
+    /**
+     * Evidenzia una voce senza eseguirne l'azione: assegnare selectedItemId farebbe scattare
+     * i listener (che aprono un'altra schermata o riportano in cima).
+     */
+    fun markSelected(navigation: BottomNavigationView, id: Int) {
+        navigation.menu.findItem(id)?.isChecked = true
+    }
+
     private fun launch(activity: Activity, destination: Class<*>) {
         if (activity.javaClass == destination) return
         activity.startActivity(Intent(activity, destination))
         if (activity !is MainActivity) activity.finish()
     }
 
-    private fun launchMain(activity: Activity, openSettings: Boolean = false) {
+    /** Torna alla Home; con [openSettings] la scorre fino alle impostazioni della località. */
+    fun launchMain(activity: Activity, openSettings: Boolean = false) {
         val intent = Intent(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         if (openSettings) intent.putExtra(EXTRA_OPEN_SETTINGS, true)
         activity.startActivity(intent)

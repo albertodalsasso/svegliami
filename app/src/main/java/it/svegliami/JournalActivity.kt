@@ -53,7 +53,9 @@ class JournalActivity : AppCompatActivity() {
         })
         findViewById<View>(R.id.btnSaveJournal).setOnClickListener { save() }
 
-        val latest = SleepStore.load(this).firstOrNull()
+        // La notte da annotare è l'ultima conclusa, non quella eventualmente ancora in registrazione.
+        val latest = SleepStore.load(this)
+            .firstOrNull { !(SleepService.isRunning && it.start == SleepService.startedAt) }
         if (latest == null) return
         sessionId = latest.start
         findViewById<TextView>(R.id.tvJournalDate).text =
@@ -62,8 +64,13 @@ class JournalActivity : AppCompatActivity() {
                 .replaceFirstChar { it.uppercase() }
         findViewById<View>(R.id.tvJournalEmpty).visibility = View.GONE
         form.visibility = View.VISIBLE
+        // Finché non arrivano i dati salvati il modulo resta bloccato: altrimenti il caricamento
+        // sovrascriverebbe quello che l'utente ha già iniziato a scrivere.
+        setFormEnabled(false)
         SleepRoomRepository.loadJournal(this, latest.start) { entry ->
             runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                setFormEnabled(true)
                 entry ?: return@runOnUiThread
                 caffeine.isChecked = entry.caffeine == true
                 exercise.isChecked = entry.exercise == true
@@ -81,6 +88,12 @@ class JournalActivity : AppCompatActivity() {
                 if (moodId != View.NO_ID) moodGroup.check(moodId)
             }
         }
+    }
+
+    private fun setFormEnabled(enabled: Boolean) {
+        listOf<View>(caffeine, exercise, stress, mealTime, notes, findViewById(R.id.btnSaveJournal)).forEach { it.isEnabled = enabled }
+        for (i in 0 until moodGroup.childCount) moodGroup.getChildAt(i).isEnabled = enabled
+        form.alpha = if (enabled) 1f else 0.6f
     }
 
     private fun stressDescription(level: Int) = when (level) {

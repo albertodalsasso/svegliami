@@ -26,8 +26,6 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
-import it.svegliami.sensors.SensorFusion
-import it.svegliami.sensors.SensorSignal
 import it.svegliami.storage.SleepRoomRepository
 import kotlin.math.log10
 import kotlin.math.sqrt
@@ -109,9 +107,12 @@ class SleepService : Service(), SensorEventListener {
             return START_NOT_STICKY
         }
         if (instance == null) {
-            trackingMode = Prefs(this).sleepTrackingMode
-            micMode = trackingMode.usesMicrophone && hasMicPermission(this)
-            accelMode = trackingMode.usesAccelerometer
+            val chosen = Prefs(this).sleepTrackingMode
+            micMode = chosen.usesMicrophone && hasMicPermission(this)
+            // Comodino senza permesso del microfono: si misura con l'accelerometro invece di
+            // non misurare niente (la notte risulterebbe tutta "sonno profondo").
+            trackingMode = if (chosen.usesMicrophone && !micMode) SleepTrackingMode.MATTRESS else chosen
+            accelMode = !micMode
         }
         goForeground()
         if (instance == null) begin()
@@ -130,10 +131,10 @@ class SleepService : Service(), SensorEventListener {
         val notif: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_alarm)
             .setContentTitle("🌙 Monitoraggio del sonno attivo")
-            .setContentText(when (trackingMode) {
-                SleepTrackingMode.NIGHTSTAND -> "Telefono sul comodino: elaborazione audio, nessuna registrazione"
-                SleepTrackingMode.COMBINED -> "Accelerometro e microfono attivi; audio non salvato"
-                SleepTrackingMode.MATTRESS -> "Lascia il telefono sul materasso, vicino al cuscino"
+            .setContentText(when {
+                micMode -> "Telefono sul comodino: elaborazione audio, nessuna registrazione"
+                trackingMode.usesMicrophone -> "Microfono non disponibile: misuro i movimenti con l'accelerometro"
+                else -> "Lascia il telefono sul materasso, vicino al cuscino"
             })
             .setOngoing(true)
             .setContentIntent(open)
@@ -227,11 +228,13 @@ class SleepService : Service(), SensorEventListener {
         }, "svegliami-mic").start()
     }
 
-    /** Degrades to the independent motion sensor and updates the foreground status. */
+    /**
+     * Il microfono si è fermato: da qui in poi misura l'accelerometro. La sessione resta
+     * "comodino", così il russare e i punteggi audio dei minuti precedenti non vanno persi.
+     */
     private fun microphoneUnavailable() {
         if (instance !== this) return
         micMode = false
-        trackingMode = SleepTrackingMode.MATTRESS
         if (!accelMode) {
             accelMode = true
             startAccelerometer()
@@ -265,18 +268,12 @@ class SleepService : Service(), SensorEventListener {
 
     private fun onMinute() {
         val accel = if (accelMode && samples > 0)
-            SensorSignal(moving * 100f / samples, (samples / 120f).coerceIn(0f, 1f))
+            moving * 100f / samples
         else null
         val mic = if (micMode) micMinute() else null
-        val score = when (trackingMode) {
-            SleepTrackingMode.MATTRESS -> accel?.activityScore ?: 0f
-            SleepTrackingMode.NIGHTSTAND -> mic?.first?.score ?: 0f
-            SleepTrackingMode.COMBINED -> SensorFusion.combine(
-                accel,
-                mic?.let { SensorSignal(it.first.score, it.second) },
-            ).activityScore
-        }
-        movementScores += accel?.activityScore
+        // Un solo sensore attivo per volta: il microfono, oppure l'accelerometro (scelto o di ripiego).
+        val score = if (mic != null) mic.first.score else accel ?: 0f
+        movementScores += accel
         soundScores += mic?.first?.score
         snore += mic?.first?.snoring ?: false
         scores += score

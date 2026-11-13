@@ -4,13 +4,13 @@
 
 Svegliami resta un'app Kotlin nativa con interfaccia Views/XML, AppCompat e Material Components. Il package applicativo è `it.svegliami`; minSdk 26 e target/compile SDK 36. Non è ancora una migrazione Compose.
 
-La Home e le activity `Sleep`, `Insights`, `Diario` e `Impostazioni` condividono la bottom navigation. Ogni destinazione è al momento una Activity Android distinta. Il monitoraggio permette ora di selezionare comodino (microfono) o materasso (accelerometro). I vecchi valori di preferenza `COMBINED` vengono letti come materasso; i record storici che li contengono non vengono riscritti.
+La Home e le activity `Sleep`, `Insights`, `Diario` e `Impostazioni` condividono la bottom navigation. Ogni destinazione è al momento una Activity Android distinta. Il monitoraggio usa un sensore per volta: comodino (microfono) o materasso (accelerometro). Se il microfono non è disponibile, all'avvio o durante la notte, si passa all'accelerometro. La modalità combinata è stata tolta: una vecchia preferenza `COMBINED` viene letta come materasso, una vecchia notte `COMBINED` come comodino.
 
 ## Confini attuali
 
 - `Prefs`: configurazione sveglie, località, cache meteo e modalità di monitoraggio in SharedPreferences.
 - `Scheduler`, `WeatherCheck`, `WeatherClient`, `RainDecider`: programmazione Android, controllo Open-Meteo e fallback della sveglia normale.
-- `SleepService`, `SleepAnalyzer`, `sensors/SensorFusion`: acquisizione e stime di attività/sonno. La fusione resta nel codice per compatibilità, ma non è selezionabile dalla UI.
+- `SleepService`, `SleepAnalyzer`: acquisizione e stime di attività/sonno.
 - `SleepStore`: archivio JSON legacy delle sessioni, ancora fonte di lettura delle schermate.
 - `storage`: schema Room e import iniziale delle sessioni JSON; Room non è ancora la fonte autorevole delle schermate.
 - `analysis`: calcolo dello score e aggregazioni statistiche.

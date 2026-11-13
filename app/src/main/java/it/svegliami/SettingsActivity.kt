@@ -1,6 +1,5 @@
 package it.svegliami
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
@@ -36,11 +35,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.btnOpenLocationSettings).setOnClickListener {
-            startActivity(
-                Intent(this, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                    .putExtra(NavigationUi.EXTRA_OPEN_SETTINGS, true),
-            )
+            NavigationUi.launchMain(this, openSettings = true)
         }
         renderLocation()
         renderTrackingDescription()
@@ -58,7 +53,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun renderTrackingDescription() {
         findViewById<TextView>(R.id.tvTrackingDescription).text = when (prefs.sleepTrackingMode) {
             SleepTrackingMode.NIGHTSTAND -> "Usa il microfono per rilevare l'attività sonora. L'audio non viene caricato."
-            SleepTrackingMode.MATTRESS, SleepTrackingMode.COMBINED -> "Usa l'accelerometro per rilevare i movimenti. Le fasi del sonno restano stime."
+            SleepTrackingMode.MATTRESS -> "Usa l'accelerometro per rilevare i movimenti. Le fasi del sonno restano stime."
         }
     }
 

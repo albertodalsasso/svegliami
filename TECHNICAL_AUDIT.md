@@ -18,7 +18,7 @@
 | Sveglia base, giorni, suoneria, AlarmManager | Presente; da verificare su device/Doze e permessi esatti |
 | Previsioni Open-Meteo e anticipo per pioggia | Presente, con fallback cache/orario normale |
 | Tracking comodino/materasso | Presente come stima locale; prestazioni non validate su device diversi |
-| Tracking combinato | Supporto legacy interno; non più selezionabile nella UI corrente |
+| Tracking combinato | Rimosso: un sensore per volta, con ripiego sull'accelerometro se il microfono manca |
 | Room | Schema, repository e import JSON iniziale; lettura UI ancora JSON |
 | Score, diario, Insights | Implementazione iniziale su sessioni disponibili |
 | Impostazioni | Pagina iniziale; selezione tracking e link alla località funzionanti; account non disponibile |
