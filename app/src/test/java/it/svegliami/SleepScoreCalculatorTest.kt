@@ -29,7 +29,7 @@ class SleepScoreCalculatorTest {
             SleepScoreInputs(420, 450, 1, time(10, 23)), emptyList(), zoneId = zone,
         )
         assertEquals(3, score.components.size)
-        assertFalse(score.components.any { it.name == "Regolarità" || it.name == "Russamento" })
+        assertFalse(score.components.any { it.name == "Regolarità" || it.name == "Russare" })
     }
 
     @Test fun `irregular bedtime lowers regularity score across midnight`() {

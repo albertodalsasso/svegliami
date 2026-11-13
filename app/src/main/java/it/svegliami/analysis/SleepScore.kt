@@ -61,7 +61,7 @@ object SleepScoreCalculator {
             input.snoringMinutes?.let { snoring ->
                 val denominator = input.sleepMinutes.coerceAtLeast(1)
                 val share = (snoring.coerceAtLeast(0).toFloat() / denominator).coerceIn(0f, 1f)
-                add(SleepScoreComponent("Russamento", ((1f - share) * 100).roundToInt(), weights.environment))
+                add(SleepScoreComponent("Russare", ((1f - share) * 100).roundToInt(), weights.environment))
             }
         }.filter { it.weight > 0 }
 

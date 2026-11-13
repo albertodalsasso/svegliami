@@ -32,7 +32,7 @@ class InsightsActivity : AppCompatActivity() {
         findViewById<SleepInsightsChartView>(R.id.scoreChart).apply {
             kind = SleepInsightsChartView.Kind.SCORE
             values = report.points.map { it.score.toFloat() }
-            contentDescription = "Andamento dello Sleep Score per ${report.nightCount} notti"
+            contentDescription = "Andamento del punteggio del sonno per ${report.nightCount} notti"
         }
         findViewById<SleepInsightsChartView>(R.id.durationChart).apply {
             kind = SleepInsightsChartView.Kind.HOURS

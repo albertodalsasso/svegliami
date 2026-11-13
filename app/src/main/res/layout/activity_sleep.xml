@@ -65,7 +65,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             app:indicatorColor="@color/tertiary"
-                            app:indicatorSize="76dp"
+                            app:indicatorInset="0dp"
+                            app:indicatorSize="72dp"
                             app:trackColor="@color/outline"
                             app:trackThickness="5dp" />
 
@@ -90,7 +91,7 @@
                             style="@style/Svegliami.Overline"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="SLEEP SCORE · INDICATIVO" />
+                            android:text="Punteggio del sonno" />
 
                         <TextView
                             android:id="@+id/tvScoreExplanation"
