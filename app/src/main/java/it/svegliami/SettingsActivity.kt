@@ -58,8 +58,20 @@ class SettingsActivity : AppCompatActivity() {
             Scheduler.rescheduleAll(this)
         }
 
+        renderSleepLog()
+        findViewById<Button>(R.id.btnClearLog).setOnClickListener {
+            SleepLog.clear(this)
+            renderSleepLog()
+        }
+
         findViewById<TextView>(R.id.tvSettingsVersion).text =
             "Versione ${runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "sconosciuta"}"
+    }
+
+    /** Ultimi 40 eventi, dal più recente. */
+    private fun renderSleepLog() {
+        val lines = SleepLog.read(this).takeLast(40).reversed()
+        findViewById<TextView>(R.id.tvSleepLog).text = if (lines.isEmpty()) "Nessun evento registrato." else lines.joinToString("\n")
     }
 
     private fun updatePlaceLabel() {

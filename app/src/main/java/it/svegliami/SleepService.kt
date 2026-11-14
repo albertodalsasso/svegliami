@@ -110,7 +110,10 @@ class SleepService : Service(), SensorEventListener {
 
     private val tick = object : Runnable {
         override fun run() {
-            onMinute()
+            // Un errore in un minuto non deve chiudere tutta la notte: si registra e si continua.
+            runCatching { onMinute() }.onFailure {
+                SleepLog.log(this@SleepService, "errore nel minuto: ${it.javaClass.simpleName}: ${it.message}")
+            }
             if (instance === this@SleepService) handler.postDelayed(this, 60_000)
         }
     }
@@ -160,6 +163,18 @@ class SleepService : Service(), SensorEventListener {
     private fun tryForeground(): Boolean = runCatching { goForeground() }.isSuccess
 
     private fun goForeground() {
+        val notif = buildNotification()
+        var type = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH else 0
+        if (micMode && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+        ServiceCompat.startForeground(this, NOTIF_ID, notif, type)
+    }
+
+    /** Aggiorna solo il testo della notifica, senza ripetere startForeground (che in background può essere vietato). */
+    private fun updateNotification() {
+        runCatching { getSystemService(NotificationManager::class.java).notify(NOTIF_ID, buildNotification()) }
+    }
+
+    private fun buildNotification(): Notification {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "Monitoraggio del sonno", NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(
@@ -168,7 +183,7 @@ class SleepService : Service(), SensorEventListener {
         val stop = PendingIntent.getService(
             this, 0, Intent(this, SleepService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE,
         )
-        val notif: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_alarm)
             .setContentTitle("🌙 Monitoraggio del sonno attivo")
             .setContentText(when {
@@ -180,9 +195,6 @@ class SleepService : Service(), SensorEventListener {
             .setContentIntent(open)
             .addAction(0, "Ferma", stop)
             .build()
-        var type = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH else 0
-        if (micMode && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-        ServiceCompat.startForeground(this, NOTIF_ID, notif, type)
     }
 
     /** Avvia una sessione nuova, oppure riprende [resume] riempiendo il vuoto della chiusura. */
@@ -207,6 +219,8 @@ class SleepService : Service(), SensorEventListener {
             repeat(missing) { scores += fill; movementScores += null; soundScores += null; snore += false }
         }
         Prefs(this).sleepActiveStart = startTime
+        SleepLog.log(this, if (resume == null) "avvio (${trackingMode.name}, microfono=${micMode})"
+            else "ripresa dopo una chiusura del sistema (${scores.size} min già registrati)")
 
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "svegliami:sleep")
@@ -246,21 +260,28 @@ class SleepService : Service(), SensorEventListener {
         Thread({
             val rec = createRecorder()
             if (rec == null) {
+                SleepLog.log(this, "microfono: impossibile aprirlo")
                 handler.post { microphoneUnavailable() }
                 return@Thread
             }
             val buf = ShortArray(CHUNK)
             var low = 0f
             var failed = false
+            var errors = 0
             try {
                 rec.startRecording()
                 while (recording) {
                     val n = rec.read(buf, 0, buf.size)
                     if (n < 0) {
-                        failed = true
-                        break
+                        // Errori passeggeri (alcuni telefoni sospendono il microfono per un attimo a
+                        // schermo spento): si riprova. Si rinuncia solo dopo ~10 s di errori continui.
+                        if (errors++ == 0) SleepLog.log(this, "microfono: errore di lettura $n")
+                        if (errors >= 100) { failed = true; break }
+                        Thread.sleep(100)
+                        continue
                     }
-                    if (n <= 0) continue
+                    if (errors > 0) { SleepLog.log(this, "microfono: ripreso dopo $errors errori"); errors = 0 }
+                    if (n == 0) continue
                     var sum = 0.0
                     var lowSum = 0.0
                     for (i in 0 until n) {
@@ -273,7 +294,8 @@ class SleepService : Service(), SensorEventListener {
                     val ratio = if (sum > 0) (lowSum / sum).toFloat().coerceIn(0f, 1f) else 0f
                     synchronized(micLevels) { micLevels.add(db); micLowRatios.add(ratio) }
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                SleepLog.log(this, "microfono: eccezione ${e.javaClass.simpleName}: ${e.message}")
                 failed = true
             } finally {
                 runCatching { rec.stop() }
@@ -289,12 +311,13 @@ class SleepService : Service(), SensorEventListener {
      */
     private fun microphoneUnavailable() {
         if (instance !== this) return
+        SleepLog.log(this, "microfono non disponibile: passo all'accelerometro")
         micMode = false
         if (!accelMode) {
             accelMode = true
             startAccelerometer()
         }
-        goForeground()
+        updateNotification()
     }
 
     /** Punteggio del minuto dal microfono, rispetto al rumore di fondo degli ultimi minuti. */
@@ -334,6 +357,7 @@ class SleepService : Service(), SensorEventListener {
         scores += score
         samples = 0; moving = 0
         persist() // ogni minuto: se il sistema chiude l'app si perde al massimo un minuto
+        if (scores.size % 30 == 0) SleepLog.log(this, "in corso: ${scores.size} min")
         checkSmartWake(score)
     }
 
@@ -379,12 +403,24 @@ class SleepService : Service(), SensorEventListener {
         recording = false
         persist()
         Prefs(this).sleepActiveStart = 0 // chiusura regolare: niente da segnalare
+        SleepLog.log(this, "fine (${scores.size} min)")
         wakeLock?.let { if (it.isHeld) it.release() }
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        SleepLog.log(this, "app tolta dalle recenti")
+        super.onTaskRemoved(rootIntent)
+    }
+
+    override fun onTrimMemory(level: Int) {
+        if (level >= TRIM_MEMORY_RUNNING_LOW) SleepLog.log(this, "memoria scarsa (livello $level)")
+        super.onTrimMemory(level)
+    }
+
     override fun onDestroy() {
+        if (instance === this) SleepLog.log(this, "servizio chiuso dal sistema")
         finish()
         super.onDestroy()
     }
