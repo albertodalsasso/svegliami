@@ -40,7 +40,7 @@ class NightActivity : AppCompatActivity() {
         setContentView(R.layout.activity_night)
         SystemBars.apply(this)
         // Luminosità al minimo solo per questa schermata: torna normale appena la si lascia.
-        window.attributes = window.attributes.apply { screenBrightness = 0.01f }
+        window.attributes = window.attributes.apply { screenBrightness = 0.08f }
 
         tvClock = findViewById(R.id.tvNightClock)
         tvSince = findViewById(R.id.tvNightSince)
@@ -89,8 +89,8 @@ class NightActivity : AppCompatActivity() {
 
         val mode = SleepService.mode
         tvMode.text = when (mode) {
-            SleepTrackingMode.NIGHTSTAND -> "🎙  Comodino"
-            else -> "🛏  Materasso"
+            SleepTrackingMode.NIGHTSTAND -> "Comodino · microfono"
+            else -> "Materasso · accelerometro"
         }
         tvSensor.text = when {
             SleepService.usingMic -> "Microfono attivo"

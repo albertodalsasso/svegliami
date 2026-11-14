@@ -20,7 +20,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-thin"
         android:includeFontPadding="false"
-        android:textColor="#4A5070"
+        android:textColor="#7A80A8"
         android:textSize="84sp" />
 
     <TextView
@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:textColor="#5C6280"
+        android:textColor="#8C92B4"
         android:textSize="16sp" />
 
     <LinearLayout
@@ -74,7 +74,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
         android:text="Tieni premuto per terminare la sessione"
-        android:textColor="#4A5070"
+        android:textColor="#7A80A8"
         android:textSize="13sp" />
 
     <com.google.android.material.button.MaterialButton
@@ -83,8 +83,8 @@
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:text="Termina la sessione"
-        android:textColor="#8A90B0"
+        android:textColor="#B0B6D4"
         android:textSize="16sp"
-        app:strokeColor="#2A2F45"
+        app:strokeColor="#3E4566"
         xmlns:app="http://schemas.android.com/apk/res-auto" />
 </LinearLayout>
