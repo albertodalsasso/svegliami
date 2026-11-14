@@ -59,6 +59,9 @@ class SleepService : Service(), SensorEventListener {
         val isRunning get() = instance != null
         val startedAt get() = instance?.startTime ?: 0L
         val usingMic get() = instance?.micMode == true
+        val usingAccelerometer get() = instance?.accelMode == true
+        /** Modalità della sessione in corso (null se non c'è). */
+        val mode get() = instance?.trackingMode
 
         fun start(ctx: Context) =
             ContextCompat.startForegroundService(ctx, Intent(ctx, SleepService::class.java).setAction(ACTION_START))
@@ -178,7 +181,7 @@ class SleepService : Service(), SensorEventListener {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "Monitoraggio del sonno", NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
+            this, 0, Intent(this, NightActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
         )
         val stop = PendingIntent.getService(
             this, 0, Intent(this, SleepService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE,

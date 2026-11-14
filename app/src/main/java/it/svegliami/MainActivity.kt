@@ -325,7 +325,7 @@ class MainActivity : AppCompatActivity() {
             val how = if (SleepService.usingMic) "col microfono" else "con l'accelerometro"
             tvSleep.text = "🌙 Monitoraggio $how attivo dalle ${Scheduler.fmtTime(SleepService.startedAt)}.\n" +
                 "Si ferma da solo quando suona la sveglia."
-            btnSleep.text = "Ferma il monitoraggio"
+            btnSleep.text = "🌙  Schermata notturna"
         } else {
             val where = when (p.sleepTrackingMode) {
                 SleepTrackingMode.NIGHTSTAND -> "sul comodino, con il microfono verso il letto"
@@ -342,10 +342,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun toggleSleep() {
         when {
-            SleepService.isRunning -> {
-                SleepService.stop()
-                btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
-            }
+            // Durante la notte il pulsante riapre la schermata notturna: lì si termina la sessione.
+            SleepService.isRunning -> startActivity(Intent(this, NightActivity::class.java))
             p.sleepTrackingMode.usesMicrophone && !SleepService.hasMicPermission(this) ->
                 requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC)
             else -> startSleep()
@@ -355,12 +353,7 @@ class MainActivity : AppCompatActivity() {
     private fun startSleep() {
         p.sleepInterruptedAt = 0
         SleepService.start(this)
-        val where = when (p.sleepTrackingMode) {
-            SleepTrackingMode.NIGHTSTAND -> "sul comodino, vicino al letto"
-            SleepTrackingMode.MATTRESS -> "sul materasso, vicino al cuscino"
-        }
-        Toast.makeText(this, "Metti il telefono $where. Buonanotte!", Toast.LENGTH_LONG).show()
-        btnSleep.postDelayed({ if (!isFinishing) renderSleep() }, 500)
+        startActivity(Intent(this, NightActivity::class.java))
     }
 
     // ---------- località ----------

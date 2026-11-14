@@ -56,6 +56,12 @@
             android:taskAffinity="" />
 
         <activity
+            android:name=".NightActivity"
+            android:exported="false"
+            android:label="Buonanotte"
+            android:launchMode="singleTop" />
+
+        <activity
             android:name=".SleepActivity"
             android:exported="false"
             android:label="Storico del sonno"
