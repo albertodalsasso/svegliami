@@ -128,6 +128,7 @@ interface SleepDao {
     @Query("SELECT * FROM sleep_sessions WHERE id = :sessionId LIMIT 1") fun session(sessionId: Long): SleepSessionEntity?
     @Query("SELECT * FROM sleep_journal_entries WHERE sessionId = :sessionId") fun journal(sessionId: Long): SleepJournalEntryEntity?
     @Query("SELECT * FROM sleep_sessions ORDER BY startTime DESC") fun sessions(): List<SleepSessionEntity>
+    @Query("SELECT * FROM sleep_journal_entries") fun journals(): List<SleepJournalEntryEntity>
     @Query("DELETE FROM sleep_sessions WHERE id NOT IN (SELECT id FROM sleep_sessions ORDER BY startTime DESC LIMIT 30)") fun trimSessions()
 }
 

@@ -1,5 +1,7 @@
 package it.svegliami
 
+import android.content.Intent
+import it.svegliami.storage.SleepRoomRepository
 import android.os.Bundle
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -24,6 +26,14 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 
 /** Storico delle notti: numeri principali, ipnogramma ed elenco. */
 class SleepActivity : AppCompatActivity() {
+    companion object {
+        private val MOODS = mapOf(
+            "VERY_RESTED" to "molto riposato", "RESTED" to "riposato", "NORMAL" to "normale",
+            "TIRED" to "stanco", "VERY_TIRED" to "molto stanco",
+        )
+        private val STRESS = listOf("molto basso", "basso", "normale", "alto", "molto alto")
+    }
+
     private val dayFmt = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN)
 
     private lateinit var graph: SleepGraphView
@@ -58,6 +68,7 @@ class SleepActivity : AppCompatActivity() {
         findViewById<View>(R.id.statsBlock).visibility = visible
         findViewById<View>(R.id.graphCard).visibility = visible
         findViewById<View>(R.id.tvNightsTitle).visibility = visible
+        findViewById<View>(R.id.journalCard).visibility = visible
         if (sessions.isEmpty()) {
             tvNight.text = "🌙  Nessuna notte registrata"
             tvNightRange.text = ""
@@ -122,7 +133,38 @@ class SleepActivity : AppCompatActivity() {
             })
             if (s.smartWakeAt > 0) append("\n🌙 Sveglia intelligente alle ${Scheduler.fmtTime(s.smartWakeAt)} (linea rosa)")
         }
+        renderJournal(s)
         renderList(sessions)
+    }
+
+    /** Annotazioni del diario per la notte selezionata, con il pulsante per compilarle o modificarle. */
+    private fun renderJournal(s: SleepSession) {
+        val summary = findViewById<TextView>(R.id.tvJournalSummary)
+        val button = findViewById<android.widget.Button>(R.id.btnEditJournal)
+        button.setOnClickListener {
+            startActivity(Intent(this, JournalActivity::class.java).putExtra(JournalActivity.EXTRA_SESSION_START, s.start))
+        }
+        summary.text = "…"
+        SleepRoomRepository.loadJournal(this, s.start) { j ->
+            runOnUiThread {
+                if (isFinishing || isDestroyed || selected?.start != s.start) return@runOnUiThread
+                if (j == null) {
+                    summary.text = "Nessuna annotazione. Segna come ti sei svegliato e le abitudini della sera: " +
+                        "dopo qualche notte le Statistiche mostrano cosa cambia il tuo sonno."
+                    button.text = "Compila il diario"
+                    return@runOnUiThread
+                }
+                summary.text = buildList {
+                    j.mood?.let { add("Risveglio: ${MOODS[it] ?: it}") }
+                    j.caffeine?.let { add(if (it) "Caffeina: sì" else "Caffeina: no") }
+                    j.exercise?.let { add(if (it) "Attività fisica: sì" else "Attività fisica: no") }
+                    j.stress?.let { add("Stress: ${STRESS.getOrElse(it) { "$it" }}") }
+                    j.mealTime?.let { add("Ultimo pasto: $it") }
+                    j.notes?.let { add("Note: $it") }
+                }.joinToString("\n").ifEmpty { "Diario salvato senza annotazioni." }
+                button.text = "Modifica"
+            }
+        }
     }
 
     private fun renderList(sessions: List<SleepSession>) {

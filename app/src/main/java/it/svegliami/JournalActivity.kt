@@ -19,7 +19,13 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class JournalActivity : AppCompatActivity() {
+    companion object {
+        /** Notte da annotare (inizio della sessione); senza, l'ultima notte conclusa. */
+        const val EXTRA_SESSION_START = "sessionStart"
+    }
+
     private var sessionId: Long? = null
+    private var fromHistory = false
     private lateinit var form: View
     private lateinit var moodGroup: RadioGroup
     private lateinit var caffeine: MaterialSwitch
@@ -54,8 +60,11 @@ class JournalActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnSaveJournal).setOnClickListener { save() }
 
         // La notte da annotare è l'ultima conclusa, non quella eventualmente ancora in registrazione.
-        val latest = SleepStore.load(this)
-            .firstOrNull { !(SleepService.isRunning && it.start == SleepService.startedAt) }
+        val requested = intent.getLongExtra(EXTRA_SESSION_START, 0L)
+        fromHistory = requested != 0L
+        val sessions = SleepStore.load(this)
+        val latest = if (fromHistory) sessions.firstOrNull { it.start == requested }
+        else sessions.firstOrNull { !(SleepService.isRunning && it.start == SleepService.startedAt) }
         if (latest == null) return
         sessionId = latest.start
         findViewById<TextView>(R.id.tvJournalDate).text =
@@ -121,7 +130,10 @@ class JournalActivity : AppCompatActivity() {
         SleepRoomRepository.saveJournal(this, entry) { saved ->
             runOnUiThread {
                 findViewById<View>(R.id.btnSaveJournal).isEnabled = true
-                if (saved) Toast.makeText(this, "Diario salvato", Toast.LENGTH_SHORT).show()
+                if (saved) {
+                    Toast.makeText(this, "Diario salvato", Toast.LENGTH_SHORT).show()
+                    if (fromHistory) finish() // si torna alla notte nello storico
+                }
                 else findViewById<TextView>(R.id.tvJournalStatus).text = "Sessione non ancora disponibile nel database. Riprova tra poco."
             }
         }

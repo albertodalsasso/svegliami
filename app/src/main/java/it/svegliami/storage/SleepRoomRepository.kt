@@ -42,6 +42,19 @@ object SleepRoomRepository {
         }
     }
 
+    /** Tutte le voci del diario, per sessione (vuoto se il database non è disponibile). */
+    fun loadJournals(context: Context, onResult: (Map<Long, SleepJournalEntryEntity>) -> Unit) {
+        val app = context.applicationContext
+        executor.execute {
+            val entries = runCatching {
+                val db = SleepDatabase.get(app)
+                importLegacyNow(app, db)
+                db.sleepDao().journals().associateBy { it.sessionId }
+            }.getOrDefault(emptyMap())
+            onResult(entries)
+        }
+    }
+
     fun saveJournal(context: Context, entry: SleepJournalEntryEntity, onResult: (Boolean) -> Unit) {
         val app = context.applicationContext
         executor.execute {
