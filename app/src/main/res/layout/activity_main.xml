@@ -62,7 +62,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end"
-                        android:text="Concedi permessi"
+                        android:text="Risolvi"
                         android:textColor="@color/on_error_container" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

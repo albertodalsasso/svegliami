@@ -67,6 +67,22 @@ class SleepService : Service(), SensorEventListener {
         fun stop() {
             instance?.finish()
         }
+
+        /** Oltre questo vuoto un monitoraggio interrotto non viene ripreso: è un'altra notte. */
+        private const val MAX_RESUME_GAP_MS = 2 * 3600_000L
+
+        /**
+         * Se un monitoraggio risulta ancora "in corso" ma il servizio non c'è, il sistema l'ha chiuso
+         * all'improvviso: lo si registra per avvisare l'utente e si chiude la sessione.
+         */
+        fun checkInterrupted(ctx: Context) {
+            if (isRunning) return
+            val p = Prefs(ctx)
+            val start = p.sleepActiveStart
+            if (start == 0L) return
+            p.sleepActiveStart = 0
+            p.sleepInterruptedAt = SleepStore.load(ctx).firstOrNull { it.start == start }?.end ?: start
+        }
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -106,6 +122,26 @@ class SleepService : Service(), SensorEventListener {
             finish()
             return START_NOT_STICKY
         }
+        if (intent == null && instance == null) {
+            // Riavvio da parte del sistema dopo una chiusura: riprende la notte, se è ancora in corso.
+            val resumable = Prefs(this).sleepActiveStart.takeIf { it > 0 }
+                ?.let { start -> SleepStore.load(this).firstOrNull { it.start == start } }
+                ?.takeIf { System.currentTimeMillis() - it.end < MAX_RESUME_GAP_MS }
+            if (resumable == null) {
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            // In background il microfono non è consentito: si riprende con l'accelerometro.
+            trackingMode = resumable.trackingMode
+            micMode = false
+            accelMode = true
+            if (!tryForeground()) {
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            begin(resumable)
+            return START_STICKY
+        }
         if (instance == null) {
             val chosen = Prefs(this).sleepTrackingMode
             micMode = chosen.usesMicrophone && hasMicPermission(this)
@@ -115,9 +151,13 @@ class SleepService : Service(), SensorEventListener {
             accelMode = !micMode
         }
         goForeground()
-        if (instance == null) begin()
-        return START_NOT_STICKY
+        if (instance == null) begin(null)
+        // STICKY: se il sistema chiude il servizio, prova a farlo ripartire (vedi sopra).
+        return START_STICKY
     }
+
+    /** startForeground può essere vietato quando il servizio riparte in background. */
+    private fun tryForeground(): Boolean = runCatching { goForeground() }.isSuccess
 
     private fun goForeground() {
         val nm = getSystemService(NotificationManager::class.java)
@@ -145,23 +185,38 @@ class SleepService : Service(), SensorEventListener {
         ServiceCompat.startForeground(this, NOTIF_ID, notif, type)
     }
 
-    private fun begin() {
+    /** Avvia una sessione nuova, oppure riprende [resume] riempiendo il vuoto della chiusura. */
+    private fun begin(resume: SleepSession?) {
         instance = this
-        startTime = System.currentTimeMillis()
         scores.clear()
-        movementScores.clear(); soundScores.clear()
+        movementScores.clear(); soundScores.clear(); snore.clear()
         samples = 0; moving = 0; last = null; smartWakeAt = 0
+        if (resume == null) {
+            startTime = System.currentTimeMillis()
+        } else {
+            startTime = resume.start
+            smartWakeAt = resume.smartWakeAt
+            scores += resume.scores
+            movementScores += resume.scores.indices.map { resume.movementScores.getOrNull(it) }
+            soundScores += resume.scores.indices.map { resume.soundScores.getOrNull(it) }
+            snore += resume.scores.indices.map { resume.snore.getOrElse(it) { false } }
+            // Minuti persi durante la chiusura: senza misure, con il valore medio degli ultimi minuti
+            // (né "profondo" né "sveglio" inventati), così gli orari del grafico restano allineati.
+            val missing = ((System.currentTimeMillis() - startTime) / 60_000L - scores.size).toInt().coerceAtLeast(0)
+            val fill = scores.takeLast(5).takeIf { it.isNotEmpty() }?.average()?.toFloat() ?: 0f
+            repeat(missing) { scores += fill; movementScores += null; soundScores += null; snore += false }
+        }
+        Prefs(this).sleepActiveStart = startTime
 
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "svegliami:sleep")
             .apply { acquire(MAX_DURATION_MS) }
         recentFloors.clear()
         synchronized(micLevels) { micLevels.clear(); micLowRatios.clear() }
-        snore.clear()
         if (accelMode) startAccelerometer()
         if (micMode) startMic()
         handler.postDelayed(tick, 60_000)
-        handler.postDelayed({ finish() }, MAX_DURATION_MS)
+        handler.postDelayed({ finish() }, (startTime + MAX_DURATION_MS - System.currentTimeMillis()).coerceAtLeast(60_000))
     }
 
     private fun startAccelerometer() {
@@ -278,7 +333,7 @@ class SleepService : Service(), SensorEventListener {
         snore += mic?.first?.snoring ?: false
         scores += score
         samples = 0; moving = 0
-        if (scores.size % 10 == 0) persist() // salvataggio periodico, nel caso il processo venga chiuso
+        persist() // ogni minuto: se il sistema chiude l'app si perde al massimo un minuto
         checkSmartWake(score)
     }
 
@@ -323,6 +378,7 @@ class SleepService : Service(), SensorEventListener {
         sensorManager?.unregisterListener(this)
         recording = false
         persist()
+        Prefs(this).sleepActiveStart = 0 // chiusura regolare: niente da segnalare
         wakeLock?.let { if (it.isHeld) it.release() }
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()

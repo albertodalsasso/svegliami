@@ -171,6 +171,16 @@ class Prefs(ctx: Context) {
         get() = sleepTrackingMode == SleepTrackingMode.NIGHTSTAND
         set(v) { sleepTrackingMode = if (v) SleepTrackingMode.NIGHTSTAND else SleepTrackingMode.MATTRESS }
 
+    /** Inizio del monitoraggio in corso (0 = nessuno). Resta impostato se il processo viene ucciso. */
+    var sleepActiveStart: Long
+        get() = sp.getLong("sleepActiveStart", 0)
+        set(v) = sp.edit().putLong("sleepActiveStart", v).apply()
+
+    /** Ora dell'ultimo dato salvato di un monitoraggio interrotto all'improvviso (0 = nessuno da segnalare). */
+    var sleepInterruptedAt: Long
+        get() = sp.getLong("sleepInterruptedAt", 0)
+        set(v) = sp.edit().putLong("sleepInterruptedAt", v).apply()
+
     /** Nuova preferenza; se assente, conserva la scelta storica a due modalità. */
     var sleepTrackingMode: SleepTrackingMode
         get() = sp.getString("sleepTrackingMode", null)

@@ -113,6 +113,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         tvToday.text = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN).format(LocalDate.now())
+        SleepService.checkInterrupted(this)
         renderAll()
         val navigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
         // markSelected non fa scattare i listener (che riporterebbero in cima la pagina a ogni ritorno).
@@ -352,6 +353,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startSleep() {
+        p.sleepInterruptedAt = 0
         SleepService.start(this)
         val where = when (p.sleepTrackingMode) {
             SleepTrackingMode.NIGHTSTAND -> "sul comodino, vicino al letto"
@@ -402,6 +404,17 @@ class MainActivity : AppCompatActivity() {
         if (Ringtones.anyNeedsStoragePermission(this)) {
             list += Issue("Accesso ai file audio non consentito (una suoneria scelta non può suonare)") {
                 requestPermissions(arrayOf(Ringtones.storagePermission()), REQ_AUDIO)
+            }
+        }
+        val interruptedAt = p.sleepInterruptedAt
+        if (interruptedAt > 0 && !SleepService.isRunning) {
+            if (System.currentTimeMillis() - interruptedAt > 18 * 3600_000L) p.sleepInterruptedAt = 0
+            else list += Issue(
+                "Il monitoraggio del sonno si è fermato alle ${Scheduler.fmtTime(interruptedAt)}: il telefono ha chiuso l'app. " +
+                    "Nelle impostazioni dell'app consenti l'attività in background e non chiuderla dalle app recenti",
+            ) {
+                p.sleepInterruptedAt = 0
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
             }
         }
         if (!p.hasLocation && !p.autoLocation) {
