@@ -171,6 +171,11 @@ class Prefs(ctx: Context) {
         get() = sleepTrackingMode == SleepTrackingMode.NIGHTSTAND
         set(v) { sleepTrackingMode = if (v) SleepTrackingMode.NIGHTSTAND else SleepTrackingMode.MATTRESS }
 
+    /** Per i test: salva anche le sessioni sotto i 10 minuti (di norma scartate). */
+    var sleepSaveShort: Boolean
+        get() = sp.getBoolean("sleepSaveShort", false)
+        set(v) = sp.edit().putBoolean("sleepSaveShort", v).apply()
+
     /** Inizio del monitoraggio in corso (0 = nessuno). Resta impostato se il processo viene ucciso. */
     var sleepActiveStart: Long
         get() = sp.getLong("sleepActiveStart", 0)

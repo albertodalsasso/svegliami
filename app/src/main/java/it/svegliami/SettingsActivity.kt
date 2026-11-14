@@ -58,6 +58,10 @@ class SettingsActivity : AppCompatActivity() {
             Scheduler.rescheduleAll(this)
         }
 
+        findViewById<CompoundButton>(R.id.swSaveShort).apply {
+            isChecked = p.sleepSaveShort
+            setOnCheckedChangeListener { _, checked -> p.sleepSaveShort = checked }
+        }
         renderSleepLog()
         findViewById<Button>(R.id.btnClearLog).setOnClickListener {
             SleepLog.clear(this)

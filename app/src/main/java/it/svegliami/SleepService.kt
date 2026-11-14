@@ -382,7 +382,10 @@ class SleepService : Service(), SensorEventListener {
     }
 
     private fun persist() {
-        if (scores.size < 10) return // sessioni di pochi minuti: non le salva
+        // Sessioni di pochi minuti: di norma non si salvano (Buonanotte premuto per sbaglio).
+        // In Opzioni si possono tenere tutte, per i test: basta un minuto registrato.
+        val minMinutes = if (Prefs(this).sleepSaveShort) 1 else 10
+        if (scores.size < minMinutes) return
         val session = SleepSession(
             start = startTime,
             end = System.currentTimeMillis(),
