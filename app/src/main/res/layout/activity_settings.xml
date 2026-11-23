@@ -93,7 +93,7 @@
 
             <TextView style="@style/Svegliami.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:text="PRIVACY" />
             <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" app:cardCornerRadius="24dp">
-                <TextView style="@style/Svegliami.Body" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="18dp" android:text="Notti, diario e diagnostica restano sul telefono. L'audio del microfono viene analizzato al momento e subito scartato: non viene mai registrato né inviato. Al servizio meteo arrivano solo le coordinate o la città." />
+                <TextView style="@style/Svegliami.Body" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="18dp" android:text="Notti e diagnostica restano sul telefono. L'audio del microfono viene analizzato al momento e subito scartato: non viene mai registrato né inviato. Al servizio meteo arrivano solo le coordinate o la città." />
             </com.google.android.material.card.MaterialCardView>
 
             <TextView style="@style/Svegliami.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:text="DIAGNOSTICA DEL MONITORAGGIO" />

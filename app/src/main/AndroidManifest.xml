@@ -68,12 +68,6 @@
             android:parentActivityName=".MainActivity" />
 
         <activity
-            android:name=".JournalActivity"
-            android:exported="false"
-            android:label="Diario del sonno"
-            android:parentActivityName=".MainActivity" />
-
-        <activity
             android:name=".InsightsActivity"
             android:exported="false"
             android:label="Statistiche"

@@ -51,7 +51,6 @@ Tipi di dati:
 | Posizione precisa | Sì | No | Come sopra (GPS) |
 | Audio (microfono) | **No** | No | Analizzato solo sul dispositivo e mai trasmesso. L'elaborazione sul dispositivo non conta come raccolta |
 | Salute e fitness (sonno, punteggio) | **No** | No | Resta sul dispositivo |
-| Diario del sonno (umore, caffeina, attività, stress, pasto, note) | **No** | No | Facoltativo, scritto dall'utente e conservato solo sul dispositivo. Rientrerebbe in *Salute e fitness* e *Altri contenuti generati dagli utenti*, ma non viene trasmesso, quindi non è "raccolto" |
 | Tutti gli altri tipi | No | No | |
 
 "Condiviso: No" vale perché l'invio della posizione al servizio meteo avviene solo per mostrare le previsioni richieste dall'utente. Se preferisci la scelta più prudente, segna "Condiviso: Sì" con scopo *Funzionalità dell'app*: non cambia nulla per l'approvazione.

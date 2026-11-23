@@ -6,11 +6,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import it.svegliami.analysis.JournalInsights
-import it.svegliami.analysis.JournalNight
 import it.svegliami.analysis.SleepInsightsCalculator
-import it.svegliami.storage.SleepRoomRepository
-import android.widget.LinearLayout
 import java.util.Locale
 
 class InsightsActivity : AppCompatActivity() {
@@ -44,50 +40,6 @@ class InsightsActivity : AppCompatActivity() {
             contentDescription = "Ore di sonno per ${report.nightCount} notti"
         }
         findViewById<TextView>(R.id.tvSleepDebt).text = formatDuration(report.sevenNightDebtMinutes)
-
-        SleepRoomRepository.loadJournals(this) { journals ->
-            runOnUiThread {
-                if (isFinishing || isDestroyed) return@runOnUiThread
-                val nights = report.points.mapNotNull { pt ->
-                    journals[pt.timestamp]?.let { j ->
-                        JournalNight(pt.timestamp, pt.sleepMinutes, pt.score, j.caffeine, j.exercise, j.stress, j.mealTime)
-                    }
-                }
-                renderHabits(nights)
-            }
-        }
-    }
-
-    /** Confronti fra notti con e senza un'abitudine annotata nel diario. */
-    private fun renderHabits(nights: List<JournalNight>) {
-        val list = findViewById<LinearLayout>(R.id.habitsList)
-        list.removeAllViews()
-        val comparisons = JournalInsights.compare(nights)
-        for (c in comparisons) {
-            val diff = c.sleepDifferenceMinutes
-            val verdict = when {
-                kotlin.math.abs(diff) < 10 -> "nessuna differenza di rilievo"
-                diff < 0 -> "${formatDuration(-diff)} di sonno in meno"
-                else -> "${formatDuration(diff)} di sonno in più"
-            }
-            list.addView(TextView(this).apply {
-                setTextColor(getColor(R.color.on_surface))
-                textSize = 16f
-                setPadding(0, (14 * resources.displayMetrics.density).toInt(), 0, 0)
-                text = "${c.habit}: $verdict"
-            })
-            list.addView(TextView(this).apply {
-                setTextColor(getColor(R.color.on_surface_variant))
-                textSize = 13f
-                text = "${c.withLabel}: ${formatDuration(c.withSleepMinutes)} · punteggio ${c.withScore} (${c.withNights} notti)\n" +
-                    "${c.withoutLabel}: ${formatDuration(c.withoutSleepMinutes)} · punteggio ${c.withoutScore} (${c.withoutNights} notti)"
-            })
-        }
-        findViewById<TextView>(R.id.tvHabitsInfo).text = when {
-            nights.isEmpty() -> "Compila il diario la mattina (scheda Diario o dallo storico): dopo qualche notte qui vedrai come caffeina, attività fisica, stress e cena tardi cambiano il tuo sonno."
-            comparisons.isEmpty() -> "Diario compilato per ${nights.size} ${if (nights.size == 1) "notte" else "notti"}. Per ogni abitudine servono almeno ${JournalInsights.MIN_NIGHTS} notti con e ${JournalInsights.MIN_NIGHTS} senza."
-            else -> "Medie delle notti con diario (${nights.size}). Sono confronti, non cause: con poche notti possono cambiare molto."
-        }
     }
 
     private fun stat(id: Int, label: String, value: String, sub: String) {

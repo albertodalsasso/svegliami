@@ -12,7 +12,6 @@ object NavigationUi {
                 R.id.navHome -> if (activity is MainActivity) activity.scrollToTop() else launchMain(activity)
                 R.id.navSleep -> launch(activity, SleepActivity::class.java)
                 R.id.navInsights -> launch(activity, InsightsActivity::class.java)
-                R.id.navJournal -> launch(activity, JournalActivity::class.java)
                 R.id.navSettings -> launch(activity, SettingsActivity::class.java)
                 else -> return@setOnItemSelectedListener false
             }

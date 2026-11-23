@@ -11,11 +11,15 @@ object SleepRoomRepository {
     private const val TAG = "SleepRoomRepository"
     private const val MIGRATION_PREFS = "sleep_room_import"
     private const val IMPORTED_KEY = "legacy_v1_imported"
+    private const val JOURNAL_CLEARED_KEY = "journal_cleared"
     private val executor = Executors.newSingleThreadExecutor()
 
     fun importLegacy(context: Context) {
         val app = context.applicationContext
-        executor.execute { runCatching { importLegacyNow(app, SleepDatabase.get(app)) }.onFailure { Log.w(TAG, "Legacy session import will retry", it) } }
+        executor.execute {
+            runCatching { importLegacyNow(app, SleepDatabase.get(app)) }.onFailure { Log.w(TAG, "Legacy session import will retry", it) }
+            clearJournalOnce(app)
+        }
     }
 
     fun mirror(context: Context, session: SleepSession) {
@@ -30,45 +34,13 @@ object SleepRoomRepository {
         }
     }
 
-    fun loadJournal(context: Context, sessionId: Long, onResult: (SleepJournalEntryEntity?) -> Unit) {
-        val app = context.applicationContext
-        executor.execute {
-            val entry = runCatching {
-                val db = SleepDatabase.get(app)
-                importLegacyNow(app, db)
-                db.sleepDao().journal(sessionId)
-            }.getOrNull()
-            onResult(entry)
-        }
-    }
-
-    /** Tutte le voci del diario, per sessione (vuoto se il database non è disponibile). */
-    fun loadJournals(context: Context, onResult: (Map<Long, SleepJournalEntryEntity>) -> Unit) {
-        val app = context.applicationContext
-        executor.execute {
-            val entries = runCatching {
-                val db = SleepDatabase.get(app)
-                importLegacyNow(app, db)
-                db.sleepDao().journals().associateBy { it.sessionId }
-            }.getOrDefault(emptyMap())
-            onResult(entries)
-        }
-    }
-
-    fun saveJournal(context: Context, entry: SleepJournalEntryEntity, onResult: (Boolean) -> Unit) {
-        val app = context.applicationContext
-        executor.execute {
-            val saved = runCatching {
-                val db = SleepDatabase.get(app)
-                importLegacyNow(app, db)
-                if (db.sleepDao().session(entry.sessionId) == null) false
-                else {
-                    db.sleepDao().putJournal(entry)
-                    true
-                }
-            }.getOrDefault(false)
-            onResult(saved)
-        }
+    /** Il diario è stato tolto: le annotazioni salvate dalle versioni precedenti vengono cancellate una volta. */
+    private fun clearJournalOnce(context: Context) {
+        val prefs = context.getSharedPreferences(MIGRATION_PREFS, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(JOURNAL_CLEARED_KEY, false)) return
+        runCatching { SleepDatabase.get(context).sleepDao().clearJournal() }
+            .onSuccess { prefs.edit().putBoolean(JOURNAL_CLEARED_KEY, true).apply() }
+            .onFailure { Log.w(TAG, "Journal cleanup will retry", it) }
     }
 
     private fun importLegacyNow(context: Context, db: SleepDatabase) {
@@ -82,7 +54,7 @@ object SleepRoomRepository {
         prefs.edit().putBoolean(IMPORTED_KEY, true).commit()
     }
 
-    /** Aggiorna la sessione senza toccarne il diario; campioni ed eventi vengono riscritti per intero. */
+    /** Aggiorna la sessione; campioni ed eventi vengono riscritti per intero. */
     private fun writeBundle(db: SleepDatabase, bundle: SleepSessionBundle) {
         val dao = db.sleepDao()
         dao.putSession(bundle.session)

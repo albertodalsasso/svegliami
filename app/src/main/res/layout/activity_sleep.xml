@@ -177,42 +177,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp" />
 
-            <!-- Diario della notte selezionata -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/journalCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="18dp">
-
-                    <TextView
-                        style="@style/Svegliami.Overline"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Diario della notte" />
-
-                    <TextView
-                        android:id="@+id/tvJournalSummary"
-                        style="@style/Svegliami.Body"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:lineSpacingExtra="3dp" />
-
-                    <Button
-                        android:id="@+id/btnEditJournal"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="end" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
             <TextView
                 android:id="@+id/tvNightsTitle"
                 style="@style/Svegliami.Title"

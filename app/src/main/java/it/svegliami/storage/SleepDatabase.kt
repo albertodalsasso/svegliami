@@ -117,18 +117,17 @@ data class AlarmEntity(
 @Dao
 interface SleepDao {
     // Upsert e non REPLACE: in SQLite REPLACE cancella la riga e la reinserisce, e la cancellazione
-    // eliminerebbe a cascata diario, campioni ed eventi della sessione.
+    // eliminerebbe a cascata campioni ed eventi della sessione.
     @Upsert fun putSession(session: SleepSessionEntity)
     @Insert fun putSamples(samples: List<SleepSampleEntity>)
     @Insert fun putEvents(events: List<SleepEventEntity>)
     @Query("DELETE FROM sleep_samples WHERE sessionId = :sessionId") fun deleteSamples(sessionId: Long)
     @Query("DELETE FROM sleep_events WHERE sessionId = :sessionId") fun deleteEvents(sessionId: Long)
-    @Insert(onConflict = OnConflictStrategy.REPLACE) fun putJournal(entry: SleepJournalEntryEntity)
     @Query("SELECT COUNT(*) FROM sleep_sessions") fun sessionCount(): Int
     @Query("SELECT * FROM sleep_sessions WHERE id = :sessionId LIMIT 1") fun session(sessionId: Long): SleepSessionEntity?
-    @Query("SELECT * FROM sleep_journal_entries WHERE sessionId = :sessionId") fun journal(sessionId: Long): SleepJournalEntryEntity?
     @Query("SELECT * FROM sleep_sessions ORDER BY startTime DESC") fun sessions(): List<SleepSessionEntity>
-    @Query("SELECT * FROM sleep_journal_entries") fun journals(): List<SleepJournalEntryEntity>
+    // Tabella del diario (funzione tolta): resta nello schema per non richiedere una migrazione.
+    @Query("DELETE FROM sleep_journal_entries") fun clearJournal()
     @Query("DELETE FROM sleep_sessions WHERE id NOT IN (SELECT id FROM sleep_sessions ORDER BY startTime DESC LIMIT 30)") fun trimSessions()
 }
 

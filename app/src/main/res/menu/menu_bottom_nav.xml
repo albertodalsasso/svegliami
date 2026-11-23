@@ -3,6 +3,5 @@
     <item android:id="@+id/navHome" android:icon="@drawable/ic_nav_home" android:title="Home" />
     <item android:id="@+id/navSleep" android:icon="@drawable/ic_nav_sleep" android:title="Sonno" />
     <item android:id="@+id/navInsights" android:icon="@drawable/ic_nav_insights" android:title="Statistiche" />
-    <item android:id="@+id/navJournal" android:icon="@drawable/ic_nav_journal" android:title="Diario" />
     <item android:id="@+id/navSettings" android:icon="@drawable/ic_nav_settings" android:title="Opzioni" />
 </menu>
