@@ -5,6 +5,19 @@ enum class SleepStage { AWAKE, LIGHT, DEEP }
 /** Risultato di un minuto in modalità microfono. */
 data class MicMinute(val score: Float, val snoring: Boolean)
 
+/**
+ * Quanto deve essere netto un suono per contare come russare.
+ * @param db dB sopra il rumore di fondo
+ * @param lowRatio quota minima di energia sotto ~800 Hz
+ * @param minEvents suoni minimi nel minuto a ritmo di respiro
+ * @param maxCv irregolarità massima del ritmo (coefficiente di variazione)
+ */
+enum class SnoreSensitivity(val label: String, val db: Float, val lowRatio: Float, val minEvents: Int, val maxCv: Double) {
+    LOW("Bassa", 9f, 0.6f, 6, 0.25),
+    NORMAL("Normale", 6f, 0.5f, 4, 0.35),
+    HIGH("Alta", 4f, 0.45f, 3, 0.45),
+}
+
 data class SleepSummary(
     val inBedMin: Int,
     val asleepMin: Int,
@@ -29,15 +42,11 @@ object SleepAnalyzer {
     const val MIC_EVENT_DB = 8f
 
     // Russare: suoni gravi, lunghi 0,3–2,5 s, ripetuti al ritmo del respiro (ogni 2–8 s).
-    // Unità: blocchi da 100 ms.
-    const val SNORE_DB = 6f
-    const val SNORE_LOW_RATIO = 0.5f
+    // Unità: blocchi da 100 ms. Le soglie dipendono dalla sensibilità scelta (SnoreSensitivity).
     private const val SNORE_MIN_CHUNKS = 3
     private const val SNORE_MAX_CHUNKS = 25
-    private const val SNORE_MIN_EVENTS = 4
     private const val BREATH_MIN_CHUNKS = 20
     private const val BREATH_MAX_CHUNKS = 80
-    private const val BREATH_MAX_CV = 0.35
 
     private const val AWAKE_SCORE = 10f
     private const val LIGHT_SCORE = 0.8f
@@ -106,11 +115,16 @@ object SleepAnalyzer {
      * @param lowRatios quota di energia sotto ~800 Hz di ogni blocco (0–1)
      * Se c'è russare, i suoi blocchi non contano come movimento.
      */
-    fun analyzeMicMinute(levelsDb: List<Float>, lowRatios: List<Float>, baselineDb: Float): MicMinute {
+    fun analyzeMicMinute(
+        levelsDb: List<Float>,
+        lowRatios: List<Float>,
+        baselineDb: Float,
+        sensitivity: SnoreSensitivity = SnoreSensitivity.NORMAL,
+    ): MicMinute {
         val n = levelsDb.size
         if (n == 0) return MicMinute(0f, false)
         val snoreLike = BooleanArray(n) {
-            levelsDb[it] > baselineDb + SNORE_DB && lowRatios.getOrElse(it) { 0f } >= SNORE_LOW_RATIO
+            levelsDb[it] > baselineDb + sensitivity.db && lowRatios.getOrElse(it) { 0f } >= sensitivity.lowRatio
         }
 
         // Raggruppa i blocchi in suoni, tollerando un blocco di pausa.
@@ -129,7 +143,7 @@ object SleepAnalyzer {
             i = end + 1
         }
         val sounds = events.filter { (it.last - it.first + 1) in SNORE_MIN_CHUNKS..SNORE_MAX_CHUNKS }
-        val snoring = isBreathingRhythm(sounds.map { it.first })
+        val snoring = isBreathingRhythm(sounds.map { it.first }, sensitivity)
 
         val excluded = BooleanArray(n)
         if (snoring) sounds.forEach { r -> r.forEach { excluded[it] = true } }
@@ -138,14 +152,14 @@ object SleepAnalyzer {
     }
 
     /** Inizi dei suoni a intervalli regolari compatibili con il respiro? */
-    private fun isBreathingRhythm(starts: List<Int>): Boolean {
-        if (starts.size < SNORE_MIN_EVENTS) return false
+    private fun isBreathingRhythm(starts: List<Int>, sensitivity: SnoreSensitivity): Boolean {
+        if (starts.size < sensitivity.minEvents) return false
         val intervals = starts.zipWithNext { a, b -> b - a }
         val breath = intervals.filter { it in BREATH_MIN_CHUNKS..BREATH_MAX_CHUNKS }
-        if (breath.size < SNORE_MIN_EVENTS - 1 || breath.size < intervals.size * 0.7) return false
+        if (breath.size < sensitivity.minEvents - 1 || breath.size < intervals.size * 0.7) return false
         val mean = breath.average()
         val sd = kotlin.math.sqrt(breath.sumOf { (it - mean) * (it - mean) } / breath.size)
-        return sd / mean <= BREATH_MAX_CV
+        return sd / mean <= sensitivity.maxCv
     }
 
     /** Nella finestra della sveglia intelligente: c'è abbastanza movimento per svegliare ora? */

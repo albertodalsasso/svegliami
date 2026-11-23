@@ -96,6 +96,19 @@ class SnoreTest {
         assertFalse(SleepAnalyzer.analyzeMicMinute(l, r, base).snoring)
     }
 
+    @Test fun `russare debole conta solo con sensibilita normale o alta`() {
+        val (l, r) = minute(every = 40, len = 10, db = base + 7f, ratio = 0.8f)
+        assertFalse(SleepAnalyzer.analyzeMicMinute(l, r, base, SnoreSensitivity.LOW).snoring)
+        assertTrue(SleepAnalyzer.analyzeMicMinute(l, r, base, SnoreSensitivity.NORMAL).snoring)
+        assertTrue(SleepAnalyzer.analyzeMicMinute(l, r, base, SnoreSensitivity.HIGH).snoring)
+    }
+
+    @Test fun `russare molto leggero solo con sensibilita alta`() {
+        val (l, r) = minute(every = 40, len = 10, db = base + 5f, ratio = 0.8f)
+        assertFalse(SleepAnalyzer.analyzeMicMinute(l, r, base, SnoreSensitivity.NORMAL).snoring)
+        assertTrue(SleepAnalyzer.analyzeMicMinute(l, r, base, SnoreSensitivity.HIGH).snoring)
+    }
+
     @Test fun `silenzio niente russare`() {
         val m = SleepAnalyzer.analyzeMicMinute(List(600) { base }, List(600) { 0.5f }, base)
         assertFalse(m.snoring)

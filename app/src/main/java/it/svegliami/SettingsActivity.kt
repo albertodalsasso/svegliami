@@ -58,6 +58,16 @@ class SettingsActivity : AppCompatActivity() {
             Scheduler.rescheduleAll(this)
         }
 
+        val segSnore = findViewById<SegmentRow>(R.id.segSnore)
+        val levels = SnoreSensitivity.entries
+        segSnore.setOptions(levels.map { it.label to it.ordinal }, setOf(p.snoreSensitivity.ordinal))
+        renderSnoreHint(p.snoreSensitivity)
+        segSnore.onChange = {
+            val chosen = levels[segSnore.selectedOne(SnoreSensitivity.NORMAL.ordinal)]
+            p.snoreSensitivity = chosen
+            renderSnoreHint(chosen)
+        }
+
         findViewById<CompoundButton>(R.id.swSaveShort).apply {
             isChecked = p.sleepSaveShort
             setOnCheckedChangeListener { _, checked -> p.sleepSaveShort = checked }
@@ -70,6 +80,14 @@ class SettingsActivity : AppCompatActivity() {
 
         findViewById<TextView>(R.id.tvSettingsVersion).text =
             "Versione ${runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "sconosciuta"}"
+    }
+
+    private fun renderSnoreHint(s: SnoreSensitivity) {
+        findViewById<TextView>(R.id.tvSnoreHint).text = when (s) {
+            SnoreSensitivity.LOW -> "Conta solo il russare forte e regolare. Scegli questa se l'app segna russare che non c'è (respiro pesante, ventilatore, partner)."
+            SnoreSensitivity.NORMAL -> "Impostazione consigliata."
+            SnoreSensitivity.HIGH -> "Conta anche il russare leggero o irregolare, con il rischio di scambiare altri rumori gravi per russare."
+        } + " Vale dalla prossima notte: le notti già registrate non cambiano."
     }
 
     /** Ultimi 40 eventi, dal più recente. */

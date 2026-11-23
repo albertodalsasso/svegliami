@@ -171,6 +171,12 @@ class Prefs(ctx: Context) {
         get() = sleepTrackingMode == SleepTrackingMode.NIGHTSTAND
         set(v) { sleepTrackingMode = if (v) SleepTrackingMode.NIGHTSTAND else SleepTrackingMode.MATTRESS }
 
+    /** Sensibilità nel riconoscere il russare (modalità Comodino). Vale dalla notte successiva. */
+    var snoreSensitivity: SnoreSensitivity
+        get() = sp.getString("snoreSensitivity", null)
+            ?.let { runCatching { SnoreSensitivity.valueOf(it) }.getOrNull() } ?: SnoreSensitivity.NORMAL
+        set(v) = sp.edit().putString("snoreSensitivity", v.name).apply()
+
     /** Per i test: salva anche le sessioni sotto i 10 minuti (di norma scartate). */
     var sleepSaveShort: Boolean
         get() = sp.getBoolean("sleepSaveShort", false)

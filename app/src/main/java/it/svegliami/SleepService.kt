@@ -104,6 +104,7 @@ class SleepService : Service(), SensorEventListener {
     // Modalità microfono: solo il livello (dB) di ogni blocco da 100 ms, mai l'audio.
     private var trackingMode = SleepTrackingMode.MATTRESS
     private var micMode = false
+    private var snoreSensitivity = SnoreSensitivity.NORMAL
     private var accelMode = false
     @Volatile private var recording = false
     private val micLevels = ArrayList<Float>()   // protetti dal lock di micLevels
@@ -222,7 +223,8 @@ class SleepService : Service(), SensorEventListener {
             repeat(missing) { scores += fill; movementScores += null; soundScores += null; snore += false }
         }
         Prefs(this).sleepActiveStart = startTime
-        SleepLog.log(this, if (resume == null) "avvio (${trackingMode.name}, microfono=${micMode})"
+        snoreSensitivity = Prefs(this).snoreSensitivity
+        SleepLog.log(this, if (resume == null) "avvio (${trackingMode.name}, microfono=${micMode}, russare=${snoreSensitivity.label.lowercase()})"
             else "ripresa dopo una chiusura del sistema (${scores.size} min già registrati)")
 
         wakeLock = getSystemService(PowerManager::class.java)
@@ -332,7 +334,7 @@ class SleepService : Service(), SensorEventListener {
         recentFloors.addLast(SleepAnalyzer.percentile(levels, 0.1f))
         while (recentFloors.size > FLOOR_MINUTES) recentFloors.removeFirst()
         val baseline = SleepAnalyzer.percentile(recentFloors.toList(), 0.5f)
-        return SleepAnalyzer.analyzeMicMinute(levels, ratios, baseline) to (levels.size / 600f).coerceIn(0f, 1f)
+        return SleepAnalyzer.analyzeMicMinute(levels, ratios, baseline, snoreSensitivity) to (levels.size / 600f).coerceIn(0f, 1f)
     }
 
     override fun onSensorChanged(event: SensorEvent) {
