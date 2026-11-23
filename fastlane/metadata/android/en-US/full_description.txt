@@ -20,7 +20,7 @@ No smartwatch needed: at night tap «Buonanotte» and choose where you leave the
 Within the window you choose, up to 45 minutes before, the alarm rings as soon as you are in light sleep. If you are sleeping deeply, it still rings at the set time.
 
 📊 SLEEP HISTORY
-• Chart of each night with estimated stages: deep, light, awake.
+• Chart of each night with estimated stages: calm, light, awake.
 • Time in bed, estimated sleep, awakenings.
 • Snore detection, with the phone on the nightstand.
 Stages are estimated from movement: they are an indication, not a medical measurement.
