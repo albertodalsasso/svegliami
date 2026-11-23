@@ -46,7 +46,7 @@ class SleepActivity : AppCompatActivity() {
         nightList = findViewById(R.id.nightList)
         findViewById<TextView>(R.id.tvLegend).text = legend()
         stat(R.id.statSleep, "Sonno")
-        stat(R.id.statDeep, "Profondo")
+        stat(R.id.statDeep, "Tranquillo")
         stat(R.id.statWake, "Risvegli")
         stat(R.id.statSnore, "Russare")
     }
@@ -153,7 +153,7 @@ class SleepActivity : AppCompatActivity() {
         }
         item(R.color.stage_awake, "Sveglio")
         item(R.color.stage_light, "Leggero")
-        item(R.color.stage_deep, "Profondo")
+        item(R.color.stage_deep, "Tranquillo")
         item(R.color.snore, "Russare")
     }
 }

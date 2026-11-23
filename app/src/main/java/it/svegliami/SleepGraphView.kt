@@ -57,7 +57,7 @@ class SleepGraphView @JvmOverloads constructor(
     }
     private val rect = RectF()
 
-    private val lanes = listOf(SleepStage.AWAKE to "Sveglio", SleepStage.LIGHT to "Leggero", SleepStage.DEEP to "Profondo")
+    private val lanes = listOf(SleepStage.AWAKE to "Sveglio", SleepStage.LIGHT to "Leggero", SleepStage.DEEP to "Tranquillo")
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)

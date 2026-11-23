@@ -18,7 +18,7 @@ Senza smartwatch: la sera premi «Buonanotte» e scegli dove lasci il telefono.
 Nella finestra che scegli, fino a 45 minuti prima, la sveglia suona appena sei nel sonno leggero. Se dormi profondamente suona comunque all'orario previsto.
 
 📊 STORICO DEL SONNO
-• Grafico di ogni notte con le fasi stimate: profondo, leggero, sveglio.
+• Grafico di ogni notte con le fasi stimate: tranquillo, leggero, sveglio.
 • Tempo a letto, sonno stimato, risvegli.
 • Rilevamento del russare, con il telefono sul comodino.
 Le fasi sono stimate dai movimenti: sono un'indicazione, non una misura medica.
