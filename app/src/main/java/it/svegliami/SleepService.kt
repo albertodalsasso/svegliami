@@ -422,8 +422,19 @@ class SleepService : Service(), SensorEventListener {
         super.onTaskRemoved(rootIntent)
     }
 
+    private var lastTrimLevel = 0
+    private var lastTrimLogAt = 0L
+
+    /** Memoria scarsa: si annota solo quando il livello sale, oppure al massimo una volta ogni 30 minuti. */
     override fun onTrimMemory(level: Int) {
-        if (level >= TRIM_MEMORY_RUNNING_LOW) SleepLog.log(this, "memoria scarsa (livello $level)")
+        if (level >= TRIM_MEMORY_RUNNING_LOW) {
+            val now = System.currentTimeMillis()
+            if (level > lastTrimLevel || now - lastTrimLogAt >= 30 * 60_000L) {
+                SleepLog.log(this, if (level >= TRIM_MEMORY_RUNNING_CRITICAL) "memoria del telefono critica" else "memoria del telefono scarsa")
+                lastTrimLogAt = now
+            }
+            lastTrimLevel = level
+        }
         super.onTrimMemory(level)
     }
 
